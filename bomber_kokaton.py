@@ -17,7 +17,7 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     戻り値：横方向，縦方向のはみ出し判定結果（画面内：True／画面外：False）
     """
     yoko, tate = True, True
-    if obj_rct.left < 50 or WIDTH - 50 < obj_rct.right:
+    if obj_rct.left < 50 or WIDTH - 50 < obj_rct.right: # ブロックにぶつかったら止まるように
         yoko = False
     if obj_rct.top < 150 or HEIGHT - 50< obj_rct.bottom:
         tate = False
