@@ -20,7 +20,7 @@ DELTA = {pg.K_UP:(0, -5),
 def main():
     pg.display.set_caption("ボンバーこうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    bg_img = pg.image.load("images/bg.png")
+    bg_img = pg.image.load("images/bg_ver.1.0.png")
     # kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
     # kk_rct = kk_img.get_rect()
     # kk_rct.center = 300, 200
