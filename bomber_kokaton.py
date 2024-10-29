@@ -20,7 +20,7 @@ DELTA = {pg.K_UP:(0, -5),
 def main():
     pg.display.set_caption("ボンバーこうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    bg_img = pg.image.load("images/bg(test).png") # 一時的な背景(緑スペース背景)   
+    bg_img = pg.image.load("images/bg.png")
     # kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
     # kk_rct = kk_img.get_rect()
     # kk_rct.center = 300, 200
@@ -32,7 +32,7 @@ def main():
             if event.type == pg.QUIT: 
                 return
             
-        screen.blit(bg_img, [0, 100]) 
+        screen.blit(bg_img, [0, 50]) 
 
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0] # 横座標、縦座標
