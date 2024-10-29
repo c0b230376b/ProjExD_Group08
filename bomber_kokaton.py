@@ -63,6 +63,7 @@ class KoukaTon:
         surface.blit(self.current_image, self.rect)
 
 
+
 def main():
     """ゲームのメインループを制御する"""
     pg.display.set_caption("ボンバーこうかとん")
@@ -75,14 +76,16 @@ def main():
     up_images = [pg.image.load("fig/14.png"), pg.image.load("fig/12.png")]
     down_images = [pg.image.load("fig/13.png"), pg.image.load("fig/15.png")]
 
-    # こうかとんのインスタンスを作成
+    # こうかとんとスコアのインスタンスを作成
     kouka_ton = KoukaTon(left_images, right_images, up_images, down_images, (300, 200))
+
     clock = pg.time.Clock()
 
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
+            
 
         screen.blit(bg_img, [0, 0])  # 背景画像を描画
         keys = pg.key.get_pressed()  # 現在のキーの状態を取得
