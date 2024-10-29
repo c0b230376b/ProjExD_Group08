@@ -6,7 +6,7 @@ import time
 import pygame as pg
 
 
-WIDTH, HEIGHT = 800, 900
+WIDTH, HEIGHT = 750, 700
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -20,10 +20,10 @@ DELTA = {pg.K_UP:(0, -5),
 def main():
     pg.display.set_caption("ボンバーこうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    bg_img = pg.image.load("fig/pg_bg.jpg")    
-    kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
-    kk_rct = kk_img.get_rect()
-    kk_rct.center = 300, 200
+    bg_img = pg.image.load("images/bg(test).png") # 一時的な背景(緑スペース背景)   
+    # kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
+    # kk_rct = kk_img.get_rect()
+    # kk_rct.center = 300, 200
     clock = pg.time.Clock()
     tmr = 0
 
@@ -32,7 +32,7 @@ def main():
             if event.type == pg.QUIT: 
                 return
             
-        screen.blit(bg_img, [0, 0]) 
+        screen.blit(bg_img, [0, 100]) 
 
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0] # 横座標、縦座標
@@ -42,7 +42,7 @@ def main():
                 sum_mv[0] += tpl[0] # 縦方向
                 sum_mv[1] += tpl[1] # 横方向
 
-        kk_rct.move_ip(sum_mv)
+        # kk_rct.move_ip(sum_mv)
 
         pg.display.update()
         tmr += 1
