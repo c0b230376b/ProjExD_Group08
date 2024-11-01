@@ -19,10 +19,16 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     yoko, tate = True, True
     if obj_rct.left < 50 or WIDTH - 50 < obj_rct.right: # ブロックにぶつかったら止まるように
         yoko = False
-    if obj_rct.top < 150 or HEIGHT - 50< obj_rct.bottom:
+    if obj_rct.top < 100 or HEIGHT - 50< obj_rct.bottom:
         tate = False
-     
-
+    for i in range(6):
+        num = 100*i
+        if (100 + num) < obj_rct.left < (150 + num) or (100 + num) < obj_rct.right < (150 + num):
+            for j in range(5):
+                num = 100 * j
+                if 150 + num < obj_rct.top < 200 + num or 150 + num < obj_rct.bottom < 200 + num:
+                    yoko = False
+                    tate = False
     return yoko, tate
 
 
@@ -91,8 +97,8 @@ class Hero:
 def main():
     pg.display.set_caption("ボンバーこうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    bg_img = pg.image.load("images/bg(test).png") # 一時的な背景(緑スペース背景)   
-    hero = Hero((200, 300))
+    bg_img = pg.image.load("images/bg_ver.1.0.png") # 一時的な背景(緑スペース背景)   
+    hero = Hero((75, 125))
     clock = pg.time.Clock()
     tmr = 0
 
@@ -101,7 +107,7 @@ def main():
             if event.type == pg.QUIT: 
                 return
             
-        screen.blit(bg_img, [0, 100]) 
+        screen.blit(bg_img, [0, 50]) 
 
         key_lst = pg.key.get_pressed()
         hero.update(key_lst, screen)
