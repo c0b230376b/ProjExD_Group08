@@ -1,18 +1,15 @@
 import os
-import random
 import sys
-import time
 
 import pygame as pg
 
 
 WIDTH, HEIGHT = 750, 700
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-DELTA = {pg.K_UP:(0, -5),
-        pg.K_DOWN:(0, 5),
-        pg.K_LEFT:(-5, 0),
-        pg.K_RIGHT:(5, 0),
-        } # 練習問題1
+        # pg.K_DOWN:(0, 5),
+        # pg.K_LEFT:(-5, 0),
+        # pg.K_RIGHT:(5, 0),
+        # } # 練習問題1
 
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
@@ -47,33 +44,34 @@ class Hero:
     ゲームキャラクター（こうかとん）に関するクラス
     """
     delta = {  # 押下キーと移動量の辞書
-        pg.K_UP: (0, -5),
-        pg.K_DOWN: (0, +5),
-        pg.K_LEFT: (-5, 0),
-        pg.K_RIGHT: (+5, 0),
+        pg.K_UP: (0, -50),
+        pg.K_DOWN: (0, +50),
+        pg.K_LEFT: (-50, 0),
+        pg.K_RIGHT: (+50, 0),
     }
     img0 = pg.transform.rotozoom(pg.image.load("images/Kokaton/3.png"), 0, 0.9)
     img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん（右向き）
     imgs = {  # 0度から反時計回りに定義
-        (+5, 0): img,  # 右
-        (+5, -5): pg.transform.rotozoom(img, 45, 0.9),  # 右上
-        (0, -5): pg.transform.rotozoom(img, 90, 0.9),  # 上
-        (-5, -5): pg.transform.rotozoom(img0, -45, 0.9),  # 左上
-        (-5, 0): img0,  # 左
-        (-5, +5): pg.transform.rotozoom(img0, 45, 0.9),  # 左下
-        (0, +5): pg.transform.rotozoom(img, -90, 0.9),  # 下
-        (+5, +5): pg.transform.rotozoom(img, -45, 0.9),  # 右下
+        (+50, 0): img,  # 右
+        (+50, -50): pg.transform.rotozoom(img, 45, 0.9),  # 右上
+        (0, -50): pg.transform.rotozoom(img, 90, 0.9),  # 上
+        (-50, -50): pg.transform.rotozoom(img0, -45, 0.9),  # 左上
+        (-50, 0): img0,  # 左
+        (-50, +50): pg.transform.rotozoom(img0, 45, 0.9),  # 左下
+        (0, +50): pg.transform.rotozoom(img, -90, 0.9),  # 下
+        (+50, +50): pg.transform.rotozoom(img, -45, 0.9),  # 右下
     }
+    mvct = 0 # 移動時のためのクールタイム
 
     def __init__(self, xy: tuple[int, int]): # こうかとんの画像、位置、状態を初期化する
         """
         こうかとん画像Surfaceを生成する
         引数 xy：こうかとん画像の初期位置座標タプル
         """
-        self.img = __class__.imgs[(+5, 0)]
+        self.img = __class__.imgs[(+50, 0)]
         self.rct: pg.Rect = self.img.get_rect()
         self.rct.center = xy
-        self.dire = (+5, 0)
+        self.dire = (+50, 0)
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -91,11 +89,15 @@ class Hero:
         引数2 screen：画面Surface
         """
         sum_mv = [0, 0]
-        for k, mv in __class__.delta.items():
-            if key_lst[k]:
-                sum_mv[0] += mv[0]
-                sum_mv[1] += mv[1]
-        self.rct.move_ip(sum_mv)
+        if __class__.mvct == 0: # 連続移動防止用カウント
+            for k, mv in __class__.delta.items():
+                if key_lst[k]:
+                    sum_mv[0] += mv[0]
+                    sum_mv[1] += mv[1]
+            self.rct.move_ip(sum_mv)
+            __class__.mvct = 5 # 5カウント分のクールタイム
+        elif 0 < __class__.mvct:
+            __class__.mvct -= 1
 
         #盤面領域内判定に応じた移動の可否
         if check_bound(self.rct) != (True, True):
@@ -129,7 +131,7 @@ def main():
 
         pg.display.update()
         tmr += 1
-        clock.tick(50)
+        clock.tick(10)
 
 
 if __name__ == "__main__":
