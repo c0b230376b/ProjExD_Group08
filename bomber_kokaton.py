@@ -1,4 +1,5 @@
 import os
+import random
 import sys
 
 import pygame as pg
@@ -35,6 +36,21 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     return yoko, tate
 
 
+def random_position() -> list:
+    """
+    盤面領域内の四隅の座標タプルをシャッフルしたリストを返す
+    戻り値：タプルのリスト
+    """
+    pos = [
+        (75, 125), # 右上
+        (75, HEIGHT - 75), # 右下
+        (WIDTH - 75, 125), # 左上
+        (WIDTH - 75, HEIGHT - 75), # 左下
+    ]
+
+    return random.sample(pos, len(pos))
+
+
 class Hero:
     """
     ゲームキャラクター（こうかとん）に関するクラス
@@ -68,15 +84,6 @@ class Hero:
         self.rct: pg.Rect = self.img.get_rect()
         self.rct.center = xy
         self.dire = (+50, 0)
-
-    def change_img(self, num: int, screen: pg.Surface):
-        """
-        こうかとん画像を切り替え，画面に転送する
-        引数1 num：こうかとん画像ファイル名の番号
-        引数2 screen：画面Surface
-        """
-        self.img = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.9)
-        screen.blit(self.img, self.rct)
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
         """
@@ -135,7 +142,8 @@ def main():
     pg.display.set_caption("ボンバーこうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("images/bg_ver.1.0.png") # 背景(完成版)
-    hero = Hero((75, 125))
+    position = random_position()
+    hero = Hero(position[-1]) # 主人公(操作キャラ)
     enemys = pg.sprite.Group() # 敵のスプライトグループ
     clock = pg.time.Clock()
     tmr = 0
