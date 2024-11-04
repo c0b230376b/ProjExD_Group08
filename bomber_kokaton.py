@@ -108,7 +108,6 @@ class Bomber(pg.sprite.Sprite):
     """
     爆弾に関するクラス
     """
-
     def __init__(self, vx: tuple[int, int]):
         """
         爆弾のSurfaceを作成する
@@ -123,10 +122,7 @@ class Bomber(pg.sprite.Sprite):
         self.count = 600 # 爆発までの待機時間
         self.state = "bom" # bombとexplosionでの管理用
 
-    def update(self):
-        """
-        爆弾の情報を更新する
-        """
+    def control(self):
         if self.count == 0:
             if self.state == "bom":
                 self.image = pg.transform.rotozoom(self.exp_img, 0, 0.05)
@@ -136,6 +132,12 @@ class Bomber(pg.sprite.Sprite):
                 self.kill()
         elif self.count > 0:
             self.count -= 1
+
+    def update(self):
+        """
+        爆弾の情報を更新する
+        """
+        self.control()
 
 
 def main():
