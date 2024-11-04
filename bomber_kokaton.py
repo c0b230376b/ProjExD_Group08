@@ -95,7 +95,7 @@ class Hero:
                     sum_mv[0] += mv[0]
                     sum_mv[1] += mv[1]
             self.rct.move_ip(sum_mv)
-            __class__.mvct = 5 # 5カウント分のクールタイム
+            __class__.mvct = 15 # 0.3秒のクールタイム
         elif 0 < __class__.mvct:
             __class__.mvct -= 1
 
@@ -131,7 +131,7 @@ def main():
 
         pg.display.update()
         tmr += 1
-        clock.tick(10)
+        clock.tick(60)
 
 
 if __name__ == "__main__":
