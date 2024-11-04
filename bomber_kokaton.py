@@ -65,7 +65,7 @@ class Hero:
         (+5, +5): pg.transform.rotozoom(img, -45, 0.9),  # 右下
     }
 
-    def __init__(self, xy: tuple[int, int]):
+    def __init__(self, xy: tuple[int, int]): # こうかとんの画像、位置、状態を初期化する
         """
         こうかとん画像Surfaceを生成する
         引数 xy：こうかとん画像の初期位置座標タプル
@@ -108,7 +108,7 @@ class Hero:
 
 def main():
     """
-    ゲームのメイン処理を行う関数
+    ゲームのメインループを制御する
     """
     pg.display.set_caption("ボンバーこうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
