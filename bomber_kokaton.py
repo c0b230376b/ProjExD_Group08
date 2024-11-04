@@ -104,6 +104,33 @@ class Hero:
         screen.blit(self.img, self.rct)
 
 
+class Bomber(pg.sprite.Sprite):
+    """
+    爆弾に関するクラス
+    """
+    count = 600
+
+    def __init__(self, vx: tuple[int, int]):
+        """
+        爆弾のSurfaceを作成する
+        引数 vx heloのrectの座標
+        """
+        super().__init__()
+        self.img = pg.image.load("images/bom/bom.png")
+        self.image = pg.transform.rotozoom(self.img, 0, 0.1)
+        self.rect = self.image.get_rect()
+        self.rect.center = vx
+
+    def update(self):
+        """
+        爆弾の情報を更新する
+        """
+        if __class__.count == 0:
+            self.kill()
+        elif __class__.count > 0:
+            __class__.count -= 1
+
+
 def main():
     """
     ゲームのメインループを制御する
@@ -112,6 +139,7 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("images/bg_ver.1.0.png") # 背景(完成版)
     hero = Hero((75, 125))
+    boms = pg.sprite.Group() # 爆弾クラスのグループ作成
     clock = pg.time.Clock()
     tmr = 0
 
@@ -119,11 +147,17 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
+            if event.type == pg.KEYDOWN: # スペースキーで爆弾設置
+                if event.key == pg.K_SPACE:
+                    boms.add(Bomber(hero.rct.center))
 
         screen.blit(bg_img, [0, 50])
+        print(hero.rct.center)
 
         key_lst = pg.key.get_pressed()
         hero.update(key_lst, screen)
+        boms.update() # 爆弾グループの更新
+        boms.draw(screen)
 
         pg.display.update()
         tmr += 1
