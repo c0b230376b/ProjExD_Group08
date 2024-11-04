@@ -108,7 +108,6 @@ class Bomber(pg.sprite.Sprite):
     """
     爆弾に関するクラス
     """
-    count = 600
 
     def __init__(self, vx: tuple[int, int]):
         """
@@ -116,19 +115,27 @@ class Bomber(pg.sprite.Sprite):
         引数 vx heloのrectの座標
         """
         super().__init__()
-        self.img = pg.image.load("images/bom/bom.png")
-        self.image = pg.transform.rotozoom(self.img, 0, 0.1)
+        self.bom_img = pg.image.load("images/bom/bom.png") # 爆弾画像
+        self.exp_img = pg.image.load("images/bom/explosion.png") # 爆発画像
+        self.image = pg.transform.rotozoom(self.bom_img, 0, 0.1)
         self.rect = self.image.get_rect()
         self.rect.center = vx
+        self.count = 600 # 爆発までの待機時間
+        self.state = "bom" # bombとexplosionでの管理用
 
     def update(self):
         """
         爆弾の情報を更新する
         """
-        if __class__.count == 0:
-            self.kill()
-        elif __class__.count > 0:
-            __class__.count -= 1
+        if self.count == 0:
+            if self.state == "bom":
+                self.image = pg.transform.rotozoom(self.exp_img, 0, 0.05)
+                self.count = 30 # 0.5秒
+                self.state = "explosion"
+            else:
+                self.kill()
+        elif self.count > 0:
+            self.count -= 1
 
 
 def main():
@@ -152,7 +159,9 @@ def main():
                     boms.add(Bomber(hero.rct.center))
 
         screen.blit(bg_img, [0, 50])
-        print(hero.rct.center)
+
+        for i in boms:
+            print(i.count)
 
         key_lst = pg.key.get_pressed()
         hero.update(key_lst, screen)
