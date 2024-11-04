@@ -115,7 +115,7 @@ class Enemy(pg.sprite.Sprite):
     """
     敵に関するクラス
     """
-    images = [pg.image.load(f"images/ufo/alien{i}.png") for i in range(1, 4)] # 敵画像三枚(3体分)
+    img = [pg.image.load(f"images/ufo/alien{i}.png") for i in range(1, 4)] # 敵画像三枚(3体分)
     mvct = 0 # 連続行動防止用クールタイム
 
     def __init__(self, num: int, vx: tuple[int, int]):
@@ -124,15 +124,37 @@ class Enemy(pg.sprite.Sprite):
         引数1 num: 画像指定用整数
         引数2 vx: Rectのcenter用タプル
         """
-        super.__init__()
-        self.img = pg.transform.rotozoom(__class__.images[num], 0, 0.6) # サイズ微調整(仮画像用)
-        self.rect = self.img.get_rect()
+        super().__init__()
+        self.image = pg.transform.rotozoom(__class__.img[num], 0, 0.6) # サイズ微調整(仮画像用)
+        self.rect = self.image.get_rect()
         self.rect.center = vx
         self.vx, self.vy = 0, 0
         self.state = "move"  # move、bomによる行動
 
     def update(self):
-        pass
+        imgs = { # 0度から反時計回りに定義
+        (+50, 0): self.img,  # 右
+        (0, -50): pg.transform.rotozoom(self.image, 90, 0.9),  # 上
+        (-50, 0): pg.transform.flip(self.image, True, False),  # 左
+        (0, +50): pg.transform.rotozoom(self.image, -90, 0.9),  # 下
+        }
+        move_list = [ # 移動方向
+            (0, -50), # 上
+            (0, +50), # 下
+            (-50, 0), # 左
+            (+50, 0), # 右
+        ]
+        sum_mv = [0, 0]
+
+        # if __class__.mvct == 0:
+        #     while True: # 移動成功までループ
+        #         self.rect.move_ip()
+        #         # 盤面領域内判定による移動の可否
+        #         if check_bound(self.rect) != (True, True):
+        #             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
+        #     self.img = __class__.imgs[sum_mv]
+        # elif __class__.mvct > 0:
+        #     __class__.mvct -= 1
 
 
 def main():
@@ -145,6 +167,8 @@ def main():
     position = random_position()
     hero = Hero(position[-1]) # 主人公(操作キャラ)
     enemys = pg.sprite.Group() # 敵のスプライトグループ
+    for i, j in enumerate(position[:-1]): # Enemyクラスのインスタンス生成
+        enemys.add(Enemy(i, j))
     clock = pg.time.Clock()
     tmr = 0
 
@@ -157,6 +181,8 @@ def main():
 
         key_lst = pg.key.get_pressed()
         hero.update(key_lst, screen)
+        enemys.update()
+        enemys.draw(screen)
 
         pg.display.update()
         tmr += 1
