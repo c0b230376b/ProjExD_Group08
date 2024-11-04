@@ -6,10 +6,6 @@ import pygame as pg
 
 WIDTH, HEIGHT = 750, 700
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-        # pg.K_DOWN:(0, 5),
-        # pg.K_LEFT:(-5, 0),
-        # pg.K_RIGHT:(5, 0),
-        # } # 練習問題1
 
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
@@ -108,6 +104,14 @@ class Hero:
         screen.blit(self.img, self.rct)
 
 
+class Enemy(pg.sprite.Sprite):
+    """
+    敵に関するクラス
+    """
+    def __init__(self):
+        pass
+
+
 def main():
     """
     ゲームのメインループを制御する
@@ -116,6 +120,7 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("images/bg_ver.1.0.png") # 背景(完成版)
     hero = Hero((75, 125))
+    enemys = pg.sprite.Group() # 敵のスプライトグループ
     clock = pg.time.Clock()
     tmr = 0
 
