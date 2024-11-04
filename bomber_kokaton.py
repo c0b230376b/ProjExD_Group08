@@ -91,7 +91,7 @@ class Hero:
                     sum_mv[0] += mv[0]
                     sum_mv[1] += mv[1]
             self.rct.move_ip(sum_mv)
-            __class__.mvct = 5 # 5カウント分のクールタイム
+            __class__.mvct = 15 # 0.3秒のクールタイム
         elif 0 < __class__.mvct:
             __class__.mvct -= 1
 
@@ -108,7 +108,23 @@ class Enemy(pg.sprite.Sprite):
     """
     敵に関するクラス
     """
-    def __init__(self):
+    images = [pg.image.load(f"images/ufo/alien{i}.png") for i in range(1, 4)] # 敵画像三枚(3体分)
+    mvct = 0 # 連続行動防止用クールタイム
+
+    def __init__(self, num: int, vx: tuple[int, int]):
+        """
+        敵のSurfaceの作成
+        引数1 num: 画像指定用整数
+        引数2 vx: Rectのcenter用タプル
+        """
+        super.__init__()
+        self.img = pg.transform.rotozoom(__class__.images[num], 0, 0.6) # サイズ微調整(仮画像用)
+        self.rect = self.img.get_rect()
+        self.rect.center = vx
+        self.vx, self.vy = 0, 0
+        self.state = "move"  # move、bomによる行動
+
+    def update(self):
         pass
 
 
@@ -136,7 +152,7 @@ def main():
 
         pg.display.update()
         tmr += 1
-        clock.tick(10)
+        clock.tick(60)
 
 
 if __name__ == "__main__":
