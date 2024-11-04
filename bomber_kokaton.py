@@ -6,10 +6,6 @@ import pygame as pg
 
 WIDTH, HEIGHT = 750, 700
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-        # pg.K_DOWN:(0, 5),
-        # pg.K_LEFT:(-5, 0),
-        # pg.K_RIGHT:(5, 0),
-        # } # 練習問題1
 
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
@@ -95,7 +91,7 @@ class Hero:
                     sum_mv[0] += mv[0]
                     sum_mv[1] += mv[1]
             self.rct.move_ip(sum_mv)
-            __class__.mvct = 15 # 0.3秒のクールタイム
+            __class__.mvct = 15 # 0.25秒のクールタイム
         elif 0 < __class__.mvct:
             __class__.mvct -= 1
 
