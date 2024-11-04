@@ -98,7 +98,7 @@ class Hero:
                     sum_mv[0] += mv[0]
                     sum_mv[1] += mv[1]
             self.rct.move_ip(sum_mv)
-            __class__.mvct = 15 # 0.3秒のクールタイム
+            __class__.mvct = 15 # 0.25秒のクールタイム
         elif 0 < __class__.mvct:
             __class__.mvct -= 1
 
@@ -115,7 +115,7 @@ class Enemy(pg.sprite.Sprite):
     """
     敵に関するクラス
     """
-    img = [pg.image.load(f"images/ufo/alien{i}.png") for i in range(1, 4)] # 敵画像三枚(3体分)
+    imgs = [pg.image.load(f"images/ufo/alien{i}.png") for i in range(1, 4)] # 敵画像三枚(3体分)
     mvct = 0 # 連続行動防止用クールタイム
 
     def __init__(self, num: int, vx: tuple[int, int]):
@@ -125,18 +125,23 @@ class Enemy(pg.sprite.Sprite):
         引数2 vx: Rectのcenter用タプル
         """
         super().__init__()
-        self.image = pg.transform.rotozoom(__class__.img[num], 0, 0.6) # サイズ微調整(仮画像用)
+        self.num = num
+        self.img = __class__.imgs[self.num]
+        self.image = pg.transform.rotozoom(self.img, 0, 0.5) # サイズ微調整(仮画像用)
         self.rect = self.image.get_rect()
         self.rect.center = vx
         self.vx, self.vy = 0, 0
-        self.state = "move"  # move、bomによる行動
+        self.state = "move"  # move、bom(未実装)による行動
 
-    def update(self):
-        imgs = { # 0度から反時計回りに定義
-        (+50, 0): self.img,  # 右
-        (0, -50): pg.transform.rotozoom(self.image, 90, 0.9),  # 上
-        (-50, 0): pg.transform.flip(self.image, True, False),  # 左
-        (0, +50): pg.transform.rotozoom(self.image, -90, 0.9),  # 下
+    def control(self):
+        """
+        的に関する動作制御を行う
+        """
+        img_key = { # 0度から反時計回りに定義
+        (+50, 0): pg.transform.rotozoom(self.img, 0, 0.5), # 右
+        (0, -50): pg.transform.rotozoom(self.image, 90, 1.0), # 上
+        (-50, 0): pg.transform.flip(self.image, True, False), # 左
+        (0, +50): pg.transform.rotozoom(self.image, -90, 1.0), # 下
         }
         move_list = [ # 移動方向
             (0, -50), # 上
@@ -144,17 +149,27 @@ class Enemy(pg.sprite.Sprite):
             (-50, 0), # 左
             (+50, 0), # 右
         ]
-        sum_mv = [0, 0]
 
-        # if __class__.mvct == 0:
-        #     while True: # 移動成功までループ
-        #         self.rect.move_ip()
-        #         # 盤面領域内判定による移動の可否
-        #         if check_bound(self.rect) != (True, True):
-        #             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
-        #     self.img = __class__.imgs[sum_mv]
-        # elif __class__.mvct > 0:
-        #     __class__.mvct -= 1
+        # クールタイムの有無を確認する
+        if __class__.mvct == 0:
+            while True: # 移動成功までループ
+                sum_mv = random.choice(move_list)
+                self.rect.move_ip(sum_mv[0], sum_mv[1])
+                # 盤面領域内判定による移動の可否
+                if check_bound(self.rect) != (True, True):
+                    self.rect.move_ip(-sum_mv[0], -sum_mv[1])
+                    continue # 移動失敗
+                break # 移動成功
+            self.image = img_key[sum_mv]
+            __class__.mvct = 15 # 0.25秒のクールタイム
+        elif __class__.mvct > 0: # クールタイムカウント
+            __class__.mvct -= 1
+
+    def update(self):
+        """
+        敵の情報を更新する
+        """
+        __class__.control(self)
 
 
 def main():
@@ -186,7 +201,7 @@ def main():
 
         pg.display.update()
         tmr += 1
-        clock.tick(60)
+        clock.tick(60) # framerateを60に設定
 
 
 if __name__ == "__main__":
