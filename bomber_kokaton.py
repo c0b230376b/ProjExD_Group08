@@ -2,8 +2,11 @@ import os
 import sys
 import pygame as pg
 
-WIDTH, HEIGHT = 800, 800
+# ゲームウィンドウのサイズ設定
+WIDTH, HEIGHT = 750, 700
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+# 方向キーに対応する移動量
 DIRECTION_DELTA = {
     pg.K_UP: (0, -5),
     pg.K_DOWN: (0, 5),
@@ -11,94 +14,131 @@ DIRECTION_DELTA = {
     pg.K_RIGHT: (5, 0),
 }
 
+def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
+    """
+    オブジェクトが画面内にあるかを判定する関数。
+    引数:
+        obj_rct (pg.Rect): 位置を判定したいオブジェクトの矩形（こうかとんやアイテムなど）。
+    戻り値:
+        tuple[bool, bool]: 横方向および縦方向のはみ出しを判定するブール値タプル。
+                          横方向: Trueなら画面内、Falseなら画面外。
+                          縦方向: Trueなら画面内、Falseなら画面外。
+    """
+    yoko, tate = True, True
+    if obj_rct.left < 50 or WIDTH - 50 < obj_rct.right:
+        yoko = False
+    if obj_rct.top < 100 or HEIGHT - 50 < obj_rct.bottom:
+        tate = False
+    for i in range(6):
+        num = 100 * i
+        if (100 + num) < obj_rct.left < (150 + num) or (100 + num) < obj_rct.right < (150 + num):
+            for j in range(5):
+                num = 100 * j
+                if 150 + num < obj_rct.top < 200 + num or 150 + num < obj_rct.bottom < 200 + num:
+                    yoko = False
+                    tate = False
+    return yoko, tate
 
-class KoukaTon:
-    """こうかとんキャラクターの動きと描画を管理するクラス"""
+class Hero:
+    """
+    ゲームキャラクター「こうかとん」の動き、画像切り替え、描画を管理するクラス
+    """
 
-    def __init__(self, left_images, right_images, up_images, down_images, initial_position):
-        """こうかとんの画像、位置、状態を初期化する"""
+    def __init__(self, initial_position):
+        """
+        Heroクラスのインスタンスを初期化し、こうかとんの画像、位置、初期状態を設定する。
+        引数:
+            initial_position (tuple[int, int]): こうかとんの初期位置（x, y座標のタプル）。
+        """
         self.images = {
-            "left": left_images,      # 左向きの画像リスト
-            "right": right_images,    # 右向きの画像リスト
-            "up": up_images,          # 上方向の画像リスト
-            "down": down_images,      # 下方向の画像リスト
-            "idle": pg.image.load("fig/4.png")  # 静止時の画像
+            "left": [pg.image.load("fig/5.png"), pg.image.load("fig/9.png")],
+            "right": [pg.image.load("fig/10.png"), pg.image.load("fig/11.png")],
+            "up": [pg.image.load("fig/14.png"), pg.image.load("fig/12.png")],
+            "down": [pg.image.load("fig/13.png"), pg.image.load("fig/15.png")],
+            "idle": pg.image.load("fig/3.png")  # 静止時の画像
         }
-        self.rect = self.images["idle"].get_rect()  # 画像の初期位置
+        self.rect = self.images["idle"].get_rect()
         self.rect.center = initial_position
-        self.current_image = self.images["idle"]  # 現在表示中の画像
-        self.frame_count = 0  # フレーム数カウンタ
+        self.current_image = self.images["idle"]
+        self.frame_count = 0
+        self.direction = "idle"  # 初期状態は静止
 
     def move(self, keys):
-        """キー入力に応じてこうかとんを移動させ、画像を切り替える"""
+        """
+        キーボード入力に基づいてこうかとんの移動と画像の方向を変更する。
+        引数:
+            keys (list[bool]): 現在押されているキーの状態（pygame.key.get_pressed()の結果）。
+        """
         movement_vector = [0, 0]  # 各方向の移動量を格納するベクトル
-        # 左右の移動
         if keys[pg.K_LEFT]:
             movement_vector[0] += DIRECTION_DELTA[pg.K_LEFT][0]
-            self.current_image = self.get_current_image("left")
+            self.direction = "left"
         elif keys[pg.K_RIGHT]:
             movement_vector[0] += DIRECTION_DELTA[pg.K_RIGHT][0]
-            self.current_image = self.get_current_image("right")
-        # 上下の移動
+            self.direction = "right"
         elif keys[pg.K_UP]:
             movement_vector[1] += DIRECTION_DELTA[pg.K_UP][1]
-            self.current_image = self.get_current_image("up")
+            self.direction = "up"
         elif keys[pg.K_DOWN]:
             movement_vector[1] += DIRECTION_DELTA[pg.K_DOWN][1]
-            self.current_image = self.get_current_image("down")
+            self.direction = "down"
         else:
-            # 移動していないときは静止状態に戻す
-            self.current_image = self.images["idle"]
+            self.direction = "idle"  # 移動がない場合は静止
 
-        # 移動量に基づいて位置を更新
+
         self.rect.move_ip(movement_vector)
-        self.frame_count += 1  # 常にフレーム数を更新
+        if check_bound(self.rect) != (True, True):
+            self.rect.move_ip(-movement_vector[0], -movement_vector[1])  
 
-    def get_current_image(self, direction):
-        """指定方向ごとのフレーム画像を取得するメソッド"""
-        return self.images[direction][self.frame_count // 10 % 2]  # 10フレームごとに切り替え
+        self.frame_count += 1  
 
-    def draw(self, surface):
-        """画面上に現在の画像を描画する"""
-        surface.blit(self.current_image, self.rect)
+    def get_current_image(self):
+        """
+        現在の移動方向に基づいてアニメーション用の画像を取得する。
+        戻り値:
+            pg.Surface: 現在のアニメーション状態に応じた画像。
+        """
+        if self.direction == "idle":
+            return self.images["idle"]
+        images = self.images[self.direction]
+        return images[self.frame_count // 10 % len(images)]  
 
-
-
+    def update(self, keys, screen):
+        """
+        こうかとんの位置と画像を更新し、画面に描画する。
+        引数:
+            keys (list[bool]): 現在押されているキーの状態（pygame.key.get_pressed()の結果）。
+            screen (pg.Surface): 描画対象の画面。
+        """
+        self.move(keys)  
+        self.current_image = self.get_current_image() 
+        screen.blit(self.current_image, self.rect) 
 def main():
-    """ゲームのメインループを制御する"""
-    pg.display.set_caption("ボンバーこうかとん")
-    screen = pg.display.set_mode((WIDTH, HEIGHT))
-    bg_img = pg.image.load("fig/pg_bg.jpg")
+    """
+    ゲームのメインループを制御し、背景画像とこうかとんを表示する。
+    pygameのイベントループを使用して、キー入力、画面更新、フレームレート管理を行う。
+    """
+    pg.display.set_caption("ボンバーこうかとん") 
+    screen = pg.display.set_mode((WIDTH, HEIGHT)) 
+    bg_img = pg.image.load("images/bg_ver.1.0.png")  
 
-    # 左右、上下移動用の画像を読み込む
-    left_images = [pg.image.load("fig/5.png"), pg.image.load("fig/9.png")]
-    right_images = [pg.image.load("fig/10.png"), pg.image.load("fig/11.png")]
-    up_images = [pg.image.load("fig/14.png"), pg.image.load("fig/12.png")]
-    down_images = [pg.image.load("fig/13.png"), pg.image.load("fig/15.png")]
-
-    # こうかとんとスコアのインスタンスを作成
-    kouka_ton = KoukaTon(left_images, right_images, up_images, down_images, (300, 200))
-
+    hero = Hero((75, 125)) 
     clock = pg.time.Clock()
 
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
-            
 
-        screen.blit(bg_img, [0, 0])  # 背景画像を描画
-        keys = pg.key.get_pressed()  # 現在のキーの状態を取得
+        screen.blit(bg_img, [0, 50]) 
+        keys = pg.key.get_pressed() 
+        hero.update(keys, screen)
 
-        kouka_ton.move(keys)  # こうかとんの移動処理
-        kouka_ton.draw(screen)  # こうかとんを画面に描画
-
-        pg.display.update()  # 画面を更新
-        clock.tick(50)  # フレームレートを制御
-
+        pg.display.update()
+        clock.tick(50)  
 
 if __name__ == "__main__":
-    pg.init()
-    main()
+    pg.init() 
+    main() 
     pg.quit()
     sys.exit()
