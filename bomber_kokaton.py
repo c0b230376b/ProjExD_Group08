@@ -97,6 +97,10 @@ class Hero:
                 if key_lst[k]:
                     sum_mv[0] += mv[0]
                     sum_mv[1] += mv[1]
+                    if 0 != sum_mv[0] and 0 != sum_mv[1]:
+                        print(8)
+                        sum_mv[0] = 0
+                        sum_mv[1] = 0
             self.rct.move_ip(sum_mv)
             __class__.mvct = 15 # 0.25秒のクールタイム
         elif 0 < __class__.mvct:
@@ -249,7 +253,7 @@ def main() -> None:
 
         pg.display.update()
         tmr += 1
-        clock.tick(60) # framerateを60に設定
+        clock.tick(80) # framerateを60に設定
 
 
 if __name__ == "__main__":
