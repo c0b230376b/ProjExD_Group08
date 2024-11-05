@@ -5,6 +5,7 @@ import pygame as pg
 
 WIDTH, HEIGHT = 750, 700
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 class Score:
     """
     スコア管理クラス
@@ -41,6 +42,19 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
                     yoko = False
                     tate = False
     return yoko, tate
+def game_over(scr: pg.Surface) -> None:
+    fonto = pg.font.SysFont("hg正楷書体pro", 70)
+    gameover_txt = fonto.render("GAME OVER", True, (255, 0, 0))
+    continue_txt = fonto.render("continue", True, (255, 255, 255))
+    tend_txt = fonto.render("end", True, (255, 255, 255))
+    picture = pg.image.load("hoshizora.png")  # 画像のパスを修正
+    picture = pg.transform.scale(picture, (WIDTH, HEIGHT))  # 画面サイズにリサイズ
+    scr.blit(picture, (0, 0))  # 背景として画像を描画
+    scr.blit(gameover_txt, [(WIDTH / 2) - (gameover_txt.get_width() / 2), HEIGHT / 4])
+    scr.blit(continue_txt, [(WIDTH / 2) - (continue_txt.get_width() / 2), HEIGHT / 2.3])
+    scr.blit(tend_txt, [(WIDTH / 2) - (tend_txt.get_width() / 2), HEIGHT / 1.8])
+    pg.display.update()
+    time.sleep(5)
 
 # 初期位置をランダムに決めるための関数
 def random_position() -> list:
@@ -55,6 +69,7 @@ def random_position() -> list:
         (WIDTH - 75, HEIGHT - 75),
     ]
     return random.sample(pos, len(pos))
+
 
 # こうかとん（プレイヤー）のクラス
 class Hero:
@@ -116,6 +131,7 @@ class Hero:
             self.dire = sum_mv
         screen.blit(self.img, self.rct)
 
+
 # エイリアンのクラス
 class Enemy(pg.sprite.Sprite):
     """
@@ -175,6 +191,7 @@ class Enemy(pg.sprite.Sprite):
         """
         __class__.control(self)
 
+
 # 爆弾（ボンバー）のクラス
 class Bomber(pg.sprite.Sprite):
     """
@@ -219,12 +236,38 @@ class Bomber(pg.sprite.Sprite):
         """
         self.control()
 
+
+def show_title_screen(screen: pg.Surface) -> None:
+    fonto = pg.font.SysFont("hg正楷書体pro", 70)
+    title_txt = fonto.render("ボンバーこうかとん", True, (255, 255, 255))
+    start_txt = fonto.render("START", True, (255, 255, 255))
+    picture = pg.image.load("fig/forest_dot1.jpg")  # 画像のパスを修正
+
+    while True:
+        screen.blit(picture, (0, 0))  # 背景として画像を描画
+        
+        screen.blit(title_txt, [(WIDTH / 2) - (title_txt.get_width() / 2), HEIGHT / 3])
+        screen.blit(start_txt, [(WIDTH / 2) - (start_txt.get_width() / 2), HEIGHT / 2])
+        pg.display.update()
+
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                pg.quit()
+                sys.exit()
+            if event.type == pg.KEYDOWN:
+                return
+
+
 def main() -> None:
     """
     ゲームのメインループを制御する
     """
     pg.display.set_caption("ボンバーこうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
+
+    # タイトル画面表示
+    show_title_screen(screen)
+
     bg_img = pg.image.load("images/bg_ver.1.0.png")  # 背景(完成版)
     hero = Hero((75, 125))  # 主人公の初期位置
     boms = pg.sprite.Group()  # 爆弾クラスのグループ作成
@@ -265,12 +308,12 @@ def main() -> None:
                         break
 
         # スコアの表示
+        screen.fill((0,0,0),(10,10,150,36))
         score_text = font.render(f"Score: {score.get_score()}", True, (255, 255, 255))
         screen.blit(score_text, (10, 10))  # スコアを画面の左上に描画
 
         pg.display.update()
         clock.tick(60)  # framerateを60に設定
-
 
 
 if __name__ == "__main__":
