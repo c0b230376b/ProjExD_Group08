@@ -92,7 +92,7 @@ class Hero:
         screen.blit(self.img, self.rct)
 
 
-# エイリアンのクラス
+# 敵のクラス
 class Enemy(pg.sprite.Sprite):
     """
     敵に関するクラス
@@ -112,36 +112,37 @@ class Enemy(pg.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = vx
         self.vx, self.vy = 0, 0
-        self.mvct = 0
-        self.state = "move"
+        self.mvct = 0 # 行動後のクールタイム
+        self.state = "move" # move、bomで行動管理
 
     def control(self) -> None:
         """
         敵に関する動作制御を行う
         """
-        img_key = {
-            (+50, 0): pg.transform.rotozoom(self.img, 0, 0.5),
-            (0, -50): pg.transform.rotozoom(self.image, 90, 1.0),
-            (-50, 0): pg.transform.flip(self.image, True, False),
-            (0, +50): pg.transform.rotozoom(self.image, -90, 1.0),
+        img_key = { # 進行方向に応じた画像
+            (+50, 0): pg.transform.rotozoom(self.img, 0, 0.5), # 右
+            (0, -50): pg.transform.rotozoom(self.image, 90, 1.0), # 上
+            (-50, 0): pg.transform.flip(self.image, True, False), # 左
+            (0, +50): pg.transform.rotozoom(self.image, -90, 1.0), # 下
         }
-        move_list = [
-            (0, -50),
-            (0, +50),
-            (-50, 0),
-            (+50, 0),
+        move_list = [ # 移動用数値
+            (0, -50), # 上
+            (0, +50), # 下
+            (-50, 0), # 左
+            (+50, 0), # 右
         ]
-        if self.mvct == 0:
+
+        if self.mvct == 0: # クールタイムでなければ
             while True:
                 sum_mv = random.choice(move_list)
                 self.rect.move_ip(sum_mv[0], sum_mv[1])
-                if check_bound(self.rect) != (True, True):
+                if check_bound(self.rect) != (True, True): # 盤面領域判定
                     self.rect.move_ip(-sum_mv[0], -sum_mv[1])
                     continue
                 break
             self.image = img_key[sum_mv]
             self.mvct = 15
-        elif self.mvct > 0:
+        elif self.mvct > 0: # クールタイムであれば
             self.mvct -= 1
 
     def update(self) -> None:
@@ -230,13 +231,11 @@ def initialize_timer(time_limit: int) -> tuple:
 def show_timer(screen: pg.Surface, font: pg.font.Font, start_ticks: int, time_limit: int) -> bool:
     """
     タイマーを表示し、時間切れから3秒後に終了
-    
     引数:
     screen: 画面Surface
     font: 表示用フォント
     start_ticks: タイマーの開始時刻
     time_limit: 制限時間
-
     戻り値:
     タイマーが有効かどうか
     """
@@ -290,7 +289,7 @@ def game_over(scr: pg.Surface) -> None:
     gameover_txt = fonto.render("GAME OVER", True, (255, 0, 0))
     continue_txt = fonto.render("continue", True, (255, 255, 255))
     tend_txt = fonto.render("end", True, (255, 255, 255))
-    picture = pg.image.load("hoshizora.png")  # 画像のパスを修正
+    picture = pg.image.load("images/hoshizora.png")  # 画像のパスを修正
     picture = pg.transform.scale(picture, (WIDTH, HEIGHT))  # 画面サイズにリサイズ
     scr.blit(picture, (0, 0))  # 背景として画像を描画
     scr.blit(gameover_txt, [(WIDTH / 2) - (gameover_txt.get_width() / 2), HEIGHT / 4])
@@ -305,7 +304,7 @@ def show_title_screen(screen: pg.Surface) -> None:
     fonto = pg.font.SysFont("hg正楷書体pro", 70)
     title_txt = fonto.render("ボンバーこうかとん", True, (255, 255, 255))
     start_txt = fonto.render("START", True, (255, 255, 255))
-    picture = pg.image.load("fig/forest_dot1.jpg")  # 画像のパスを修正
+    picture = pg.image.load("images/forest_dot1.jpg")  # 画像のパスを修正
 
     while True:
         screen.blit(picture, (0, 0))  # 背景として画像を描画
@@ -355,10 +354,9 @@ def main() -> None:
     pg.font.init() # フォントの初期化
     font = pg.font.Font(None, 36) # フォントを作成
 
-    # フォントの初期化
-    pg.font.init()
+    pg.font.init() # フォントの初期化
     font = pg.font.Font(None, 36)  # フォントを作成
-    start_ticks, time_limit = initialize_timer(10)
+    start_ticks, time_limit = initialize_timer(180)
 
     while True:
         for event in pg.event.get():
@@ -367,15 +365,6 @@ def main() -> None:
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:  # スペースキーで爆弾設置
                     boms.add(Bomber(hero.rct.center, hero, enemys))
-
-                    boms.add(Bomber(hero.rct.center, hero, enemys))  # 传递 hero 和 enemies
-        screen.blit(bg_img, [0, 50])
-        key_lst = pg.key.get_pressed()
-        hero.update(key_lst, screen)
-        enemys.update() # 敵グループの更新
-        enemys.draw(screen)
-        boms.update() # 爆弾グループの更新
-        boms.draw(screen)
 
         # 爆弾と敵の衝突判定
         for bom in boms:
@@ -387,13 +376,22 @@ def main() -> None:
                         break
 
         # スコアの表示
-        screen.fill((0,0,0),(10,10,150,36))
+        screen.fill((0,0,0), (10,10,150,36))
         score_text = font.render(f"Score: {score.get_score()}", True, (255, 255, 255))
         screen.blit(score_text, (10, 10))  # スコアを画面の左上に描画
         if not show_timer(screen, font, start_ticks, time_limit):
-                return
+            return
+
+        screen.blit(bg_img, [0, 50])
+        key_lst = pg.key.get_pressed()
+        hero.update(key_lst, screen)
+        enemys.update() # 敵グループの更新
+        enemys.draw(screen)
+        boms.update() # 爆弾グループの更新
+        boms.draw(screen)
+
         pg.display.update()
-        clock.tick(60)  # framerateを60に設定
+        clock.tick(60) # framerateを60に設定
 
 
 if __name__ == "__main__":
