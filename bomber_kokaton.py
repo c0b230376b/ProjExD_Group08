@@ -5,6 +5,20 @@ import pygame as pg
 
 WIDTH, HEIGHT = 750, 700
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+class Score:
+    """
+    スコア管理クラス
+    スコアの追跡と更新を処理する
+    """
+    def __init__(self) -> None:
+        self.score = 0  # 初期スコアは0
+
+    def add_score(self, points: int) -> None:
+        self.score += points  # スコアを加算
+        print(f"Score: {self.score}")  # 現在のスコアを表示（デバッグ用）
+
+    def get_score(self) -> int:
+        return self.score  # 現在のスコアを返す
 
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
@@ -205,30 +219,33 @@ class Bomber(pg.sprite.Sprite):
         """
         self.control()
 
-# メイン関数
 def main() -> None:
     """
     ゲームのメインループを制御する
     """
     pg.display.set_caption("ボンバーこうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    bg_img = pg.image.load("images/bg_ver.1.0.png")
+    bg_img = pg.image.load("images/bg_ver.1.0.png")  # 背景(完成版)
+    hero = Hero((75, 125))  # 主人公の初期位置
+    boms = pg.sprite.Group()  # 爆弾クラスのグループ作成
     position = random_position()
-    hero = Hero(position[-1])
-    boms = pg.sprite.Group()
-    enemys = pg.sprite.Group()
+    enemys = pg.sprite.Group()  # 敵のスプライトグループ
     for i, j in enumerate(position[:-1]):
-        enemys.add(Enemy(i, j))
+        enemys.add(Enemy(i, j))  # 敵のインスタンス生成
     clock = pg.time.Clock()
-    tmr = 0
+    score = Score()  # スコアオブジェクトを作成
+
+    # フォントの初期化
+    pg.font.init()
+    font = pg.font.Font(None, 36)  # フォントを作成
 
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN:
-                if event.key == pg.K_SPACE:
-                    boms.add(Bomber(hero.rct.center, hero, enemys))
+                if event.key == pg.K_SPACE:  # スペースキーで爆弾設置
+                    boms.add(Bomber(hero.rct.center, hero, enemys))  # 传递 hero 和 enemies
 
         screen.blit(bg_img, [0, 50])
         key_lst = pg.key.get_pressed()
@@ -238,14 +255,23 @@ def main() -> None:
         boms.update()
         boms.draw(screen)
 
-        # スコアを表示する処理
-        font = pg.font.SysFont("Arial", 24, bold=False)
-        score_surf = font.render(f"Score: {hero.score}", True, (200, 200, 200))
-        screen.blit(score_surf, (5, 5))
+        # 爆弾と敵の衝突判定
+        for bom in boms:
+            if bom.state == "explosion":
+                for enemy in enemys:
+                    if bom.rect.colliderect(enemy.rect):  # 衝突判定
+                        score.add_score(100)  # スコアを加算
+                        enemy.kill()  # 敵を消去
+                        break
+
+        # スコアの表示
+        score_text = font.render(f"Score: {score.get_score()}", True, (255, 255, 255))
+        screen.blit(score_text, (10, 10))  # スコアを画面の左上に描画
 
         pg.display.update()
-        tmr += 1
-        clock.tick(60)
+        clock.tick(60)  # framerateを60に設定
+
+
 
 if __name__ == "__main__":
     pg.init()
