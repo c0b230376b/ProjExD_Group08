@@ -75,7 +75,7 @@ class Hero:
     }
     mvct = 0 # 移動時のためのクールタイム
 
-    def __init__(self, xy: tuple[int, int]): # こうかとんの画像、位置、状態を初期化する
+    def __init__(self, xy: tuple[int, int]) -> None: # こうかとんの画像、位置、状態を初期化する
         """
         こうかとん画像Surfaceを生成する
         引数 xy：こうかとん画像の初期位置座標タプル
@@ -85,7 +85,7 @@ class Hero:
         self.rct.center = xy
         self.dire = (+50, 0)
 
-    def update(self, key_lst: list[bool], screen: pg.Surface):
+    def update(self, key_lst: list[bool], screen: pg.Surface) -> None:
         """
         押下キーに応じてこうかとんを移動させる
         引数1 key_lst：押下キーの真理値リスト
@@ -117,7 +117,7 @@ class Enemy(pg.sprite.Sprite):
     """
     imgs = [pg.image.load(f"images/ufo/alien{i}.png") for i in range(1, 4)] # 敵画像三枚(3体分)
 
-    def __init__(self, num: int, vx: tuple[int, int]):
+    def __init__(self, num: int, vx: tuple[int, int]) -> None:
         """
         敵のSurfaceの作成
         引数1 num: 画像指定用整数
@@ -133,7 +133,7 @@ class Enemy(pg.sprite.Sprite):
         self.mvct = 0 # 連続行動防止用クールタイム
         self.state = "move"  # move、bom(未実装)による行動
 
-    def control(self):
+    def control(self) -> None:
         """
         的に関する動作制御を行う
         """
@@ -165,14 +165,14 @@ class Enemy(pg.sprite.Sprite):
         elif self.mvct > 0: # クールタイムカウント
             self.mvct -= 1
 
-    def update(self):
+    def update(self) -> None:
         """
         敵の情報を更新する
         """
         __class__.control(self)
 
 
-def main():
+def main() -> None:
     """
     ゲームのメインループを制御する
     """
