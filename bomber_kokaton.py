@@ -237,7 +237,7 @@ def main() -> None:
 
     # フォントの初期化
     pg.font.init()
-    font = pg.font.Font(None, 36)  # フォントを作成
+    font = pg.font.SysFont(None, 36)  # フォントを作成
 
     while True:
         for event in pg.event.get():
@@ -265,6 +265,7 @@ def main() -> None:
                         break
 
         # スコアの表示
+        screen.fill((0, 0, 0), (10, 10, 150, 36))  # スコア表示位置を黒で塗りつぶす
         score_text = font.render(f"Score: {score.get_score()}", True, (255, 255, 255))
         screen.blit(score_text, (10, 10))  # スコアを画面の左上に描画
 
