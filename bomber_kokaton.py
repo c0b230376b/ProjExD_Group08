@@ -22,6 +22,52 @@ class Score:
         return self.score  # 現在のスコアを返す
 
 
+def initialize_timer(time_limit: int) -> tuple:
+    """
+    タイマーの初期設定
+    引数:
+    time_limit: 制限時間（秒）
+    
+    戻り値:
+    タイマーの開始時刻, 制限時間
+    """
+    start_ticks = pg.time.get_ticks()
+    return start_ticks, time_limit
+
+
+def show_timer(screen: pg.Surface, font: pg.font.Font, start_ticks: int, time_limit: int) -> bool:
+    """
+    タイマーを表示し、時間切れから3秒後に終了
+    
+    引数:
+    screen: 画面Surface
+    font: 表示用フォント
+    start_ticks: タイマーの開始時刻
+    time_limit: 制限時間
+
+    戻り値:
+    タイマーが有効かどうか
+    """
+    elapsed_seconds = (pg.time.get_ticks() - start_ticks) / 1000
+    time_left = time_limit - elapsed_seconds
+
+    if time_left > 0:
+        timer_text = font.render(f"Time: {int(time_left)}", True, (255, 255, 255))
+        screen.blit(timer_text, (WIDTH // 2 - timer_text.get_width() // 2, 50))
+        return True  # タイマー継続
+    else:
+        # タイマーが終了し、3秒間timeoverを表示して終了
+        if not hasattr(show_timer, "timeover_start"):
+            show_timer.timeover_start = pg.time.get_ticks()
+
+        timeover_text = font.render("timeover", True, (255, 0, 0))
+        screen.blit(timeover_text, (WIDTH // 2 - timeover_text.get_width() // 2, HEIGHT // 2))
+
+        if (pg.time.get_ticks() - show_timer.timeover_start) / 1000 > 3:
+            return False  # タイマー終了
+
+    return True
+
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
     """
     オブジェクトが画面内or画面外を判定し，真理値タプルを返す関数
@@ -281,6 +327,7 @@ def main() -> None:
     # フォントの初期化
     pg.font.init()
     font = pg.font.Font(None, 36)  # フォントを作成
+    start_ticks, time_limit = initialize_timer(10)
 
     while True:
         for event in pg.event.get():
@@ -289,7 +336,6 @@ def main() -> None:
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:  # スペースキーで爆弾設置
                     boms.add(Bomber(hero.rct.center, hero, enemys))  # 传递 hero 和 enemies
-
         screen.blit(bg_img, [0, 50])
         key_lst = pg.key.get_pressed()
         hero.update(key_lst, screen)
@@ -311,7 +357,8 @@ def main() -> None:
         screen.fill((0,0,0),(10,10,150,36))
         score_text = font.render(f"Score: {score.get_score()}", True, (255, 255, 255))
         screen.blit(score_text, (10, 10))  # スコアを画面の左上に描画
-
+        if not show_timer(screen, font, start_ticks, time_limit):
+                return
         pg.display.update()
         clock.tick(60)  # framerateを60に設定
 
