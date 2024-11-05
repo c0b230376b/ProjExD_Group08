@@ -1,119 +1,121 @@
 import os
 import sys
-
 import pygame as pg
+from typing import Dict, List, Tuple
 
-
-WIDTH, HEIGHT = 750, 700
+# ゲームウィンドウのサイズ設定
+WIDTH, HEIGHT = 750, 750
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+# 方向キーに対応する移動量
+DIRECTION_DELTA: Dict[int, Tuple[int, int]] = {
+    pg.K_UP: (0, -5),
+    pg.K_DOWN: (0, 5),
+    pg.K_LEFT: (-5, 0),
+    pg.K_RIGHT: (5, 0),
+}
 
-def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
+def check_bound(obj_rct: pg.Rect) -> Tuple[bool, bool]:
     """
-    オブジェクトが画面内or画面外を判定し，真理値タプルを返す関数
-    引数：こうかとんやその他動的オブジェクトのRect
-    戻り値：横方向，縦方向のはみ出し判定結果（画面内：True／画面外：False）
+    オブジェクトが画面内にあるかを判定する関数。
+
+    Parameters:
+    obj_rct (pg.Rect): チェック対象のオブジェクトの矩形領域 (pygame.Rectオブジェクト)。
+
+    Returns:
+    Tuple[bool, bool]: x方向とy方向の境界内かどうかを表す2つのブール値を含むタプル。
+                       - (True, True): オブジェクトは画面内にある。
+                       - (False, True): オブジェクトは横方向に画面外。
+                       - (True, False): オブジェクトは縦方向に画面外。
+                       - (False, False): オブジェクトは両方向に画面外。
     """
     yoko, tate = True, True
-
-    #盤面領域判定
-    if obj_rct.left < 50 or WIDTH - 50 < obj_rct.right: # ブロックにぶつかったら止まるように
+    if obj_rct.left < 50 or WIDTH - 50 < obj_rct.right:
         yoko = False
-    if obj_rct.top < 100 or HEIGHT - 50< obj_rct.bottom:
+    if obj_rct.top < 100 or HEIGHT - 50 < obj_rct.bottom:
         tate = False
-
-    #盤面領域内障害物判定
     for i in range(6):
-        num = 100*i
+        num = 100 * i
         if (100 + num) < obj_rct.left < (150 + num) or (100 + num) < obj_rct.right < (150 + num):
             for j in range(5):
                 num = 100 * j
                 if 150 + num < obj_rct.top < 200 + num or 150 + num < obj_rct.bottom < 200 + num:
                     yoko = False
                     tate = False
-
     return yoko, tate
-
 
 class Hero:
     """
-    ゲームキャラクター（こうかとん）に関するクラス
+    ゲームキャラクター「こうかとん」の動き、画像切り替え、描画を管理するクラス。
     """
-    delta = {  # 押下キーと移動量の辞書
-        pg.K_UP: (0, -50),
-        pg.K_DOWN: (0, +50),
-        pg.K_LEFT: (-50, 0),
-        pg.K_RIGHT: (+50, 0),
-    }
-    img0 = pg.transform.rotozoom(pg.image.load("images/Kokaton/3.png"), 0, 0.9)
-    img = pg.transform.flip(img0, True, False)  # デフォルトのこうかとん（右向き）
-    imgs = {  # 0度から反時計回りに定義
-        (+50, 0): img,  # 右
-        (+50, -50): pg.transform.rotozoom(img, 45, 0.9),  # 右上
-        (0, -50): pg.transform.rotozoom(img, 90, 0.9),  # 上
-        (-50, -50): pg.transform.rotozoom(img0, -45, 0.9),  # 左上
-        (-50, 0): img0,  # 左
-        (-50, +50): pg.transform.rotozoom(img0, 45, 0.9),  # 左下
-        (0, +50): pg.transform.rotozoom(img, -90, 0.9),  # 下
-        (+50, +50): pg.transform.rotozoom(img, -45, 0.9),  # 右下
-    }
-    mvct = 0 # 移動時のためのクールタイム
 
-    def __init__(self, xy: tuple[int, int]) -> None: # こうかとんの画像、位置、状態を初期化する
+    def __init__(self, initial_position: Tuple[int, int]) -> None:
         """
-        こうかとん画像Surfaceを生成する
-        引数 xy：こうかとん画像の初期位置座標タプル
-        """
-        self.img = __class__.imgs[(+50, 0)]
-        self.rct: pg.Rect = self.img.get_rect()
-        self.rct.center = xy
-        self.dire = (+50, 0)
+        Heroクラスのインスタンスを初期化し、こうかとんの画像、位置、初期状態を設定する。
 
-    def change_img(self, num: int, screen: pg.Surface) -> None:
+        Parameters:
+        initial_position (Tuple[int, int]): こうかとんの初期位置を表すタプル (x座標, y座標)。
         """
-        こうかとん画像を切り替え，画面に転送する
-        引数1 num：こうかとん画像ファイル名の番号
-        引数2 screen：画面Surface
-        """
-        self.img = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.9)
-        screen.blit(self.img, self.rct)
+        self.images: Dict[str, List[pg.Surface]] = {
+            "left": [pg.transform.rotozoom(pg.image.load("fig/5.png"), 0, 0.7), pg.transform.rotozoom(pg.image.load("fig/9.png"), 0, 0.7)],
+            "right": [pg.transform.rotozoom(pg.image.load("fig/10.png"), 0, 0.7), pg.transform.rotozoom(pg.image.load("fig/11.png"), 0, 0.7)],
+            "up": [pg.transform.rotozoom(pg.image.load("fig/14.png"), 0, 0.7), pg.transform.rotozoom(pg.image.load("fig/12.png"), 0, 0.7)],
+            "down": [pg.transform.rotozoom(pg.image.load("fig/13.png"), 0, 0.7), pg.transform.rotozoom(pg.image.load("fig/15.png"), 0, 0.7)],
+            "idle": pg.transform.rotozoom(pg.image.load("fig/4.png"), 0, 0.7)
+        }
+        self.rect: pg.Rect = self.images["idle"].get_rect(center=initial_position)
+        self.direction: str = "idle"  # 初期方向
+        self.frame_count: int = 0  # アニメーションフレーム用カウンタ
 
-    def update(self, key_lst: list[bool], screen: pg.Surface) -> None:
+    def update(self, keys: pg.key.ScancodeWrapper, screen: pg.Surface) -> None:
         """
-        押下キーに応じてこうかとんを移動させる
-        引数1 key_lst：押下キーの真理値リスト
-        引数2 screen：画面Surface
+        こうかとんの位置と画像を更新し、画面に描画する。
+
+        Parameters:
+        keys (pg.key.ScancodeWrapper): プレイヤーからのキー入力情報。
+        screen (pg.Surface): 描画対象のpygameの画面Surface。
         """
-        sum_mv = [0, 0]
-        if __class__.mvct == 0: # 連続移動防止用カウント
-            for k, mv in __class__.delta.items():
-                if key_lst[k]:
-                    sum_mv[0] += mv[0]
-                    sum_mv[1] += mv[1]
-            self.rct.move_ip(sum_mv)
-            __class__.mvct = 15 # 0.25秒のクールタイム
-        elif 0 < __class__.mvct:
-            __class__.mvct -= 1
+        movement_vector = [0, 0]
+        if keys[pg.K_LEFT]:
+            movement_vector[0] += DIRECTION_DELTA[pg.K_LEFT][0]
+            self.direction = "left"
+        elif keys[pg.K_RIGHT]:
+            movement_vector[0] += DIRECTION_DELTA[pg.K_RIGHT][0]
+            self.direction = "right"
+        elif keys[pg.K_UP]:
+            movement_vector[1] += DIRECTION_DELTA[pg.K_UP][1]
+            self.direction = "up"
+        elif keys[pg.K_DOWN]:
+            movement_vector[1] += DIRECTION_DELTA[pg.K_DOWN][1]
+            self.direction = "down"
+        else:
+            self.direction = "idle"  # 移動がない場合は静止
 
-        #盤面領域内判定に応じた移動の可否
-        if check_bound(self.rct) != (True, True):
-            self.rct.move_ip(-sum_mv[0], -sum_mv[1])
-        if not (sum_mv[0] == 0 and sum_mv[1] == 0):
-            self.img = __class__.imgs[tuple(sum_mv)]
-            self.dire = sum_mv # 更新
-        screen.blit(self.img, self.rct)
+        # 移動
+        self.rect.move_ip(movement_vector)
+        if check_bound(self.rect) != (True, True):
+            self.rect.move_ip(-movement_vector[0], -movement_vector[1])
 
+        # フレームカウントに基づいて画像を切り替え
+        self.frame_count += 1
+        if self.direction == "idle":
+            current_image = self.images["idle"]
+        else:
+            images = self.images[self.direction]
+            current_image = images[self.frame_count // 10 % len(images)]
+
+        screen.blit(current_image, self.rect)
 
 def main() -> None:
     """
-    ゲームのメインループを制御する
+    ゲームのメインループを制御し、背景画像とこうかとんを表示する。
     """
     pg.display.set_caption("ボンバーこうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    bg_img = pg.image.load("images/bg_ver.1.0.png") # 背景(完成版)
+    bg_img = pg.image.load("images/bg_ver.1.0.png")
+
     hero = Hero((75, 125))
     clock = pg.time.Clock()
-    tmr = 0
 
     while True:
         for event in pg.event.get():
@@ -121,14 +123,11 @@ def main() -> None:
                 return
 
         screen.blit(bg_img, [0, 50])
-
-        key_lst = pg.key.get_pressed()
-        hero.update(key_lst, screen)
+        keys = pg.key.get_pressed()
+        hero.update(keys, screen)
 
         pg.display.update()
-        tmr += 1
-        clock.tick(60)
-
+        clock.tick(25)
 
 if __name__ == "__main__":
     pg.init()
