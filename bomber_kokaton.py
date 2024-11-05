@@ -1,138 +1,251 @@
 import os
+import random
 import sys
 import pygame as pg
 
-WIDTH, HEIGHT = 800, 800
+WIDTH, HEIGHT = 750, 700
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-DIRECTION_DELTA = {
-    pg.K_UP: (0, -5),
-    pg.K_DOWN: (0, 5),
-    pg.K_LEFT: (-5, 0),
-    pg.K_RIGHT: (5, 0),
-}
 
 
-class KoukaTon:
-    """こうかとんキャラクターの動きと描画を管理するクラス"""
+def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
+    """
+    オブジェクトが画面内or画面外を判定し，真理値タプルを返す関数
+    引数：こうかとんやその他動的オブジェクトのRect
+    戻り値：横方向，縦方向のはみ出し判定結果（画面内：True／画面外：False）
+    """
+    yoko, tate = True, True
+    if obj_rct.left < 50 or WIDTH - 50 < obj_rct.right:
+        yoko = False
+    if obj_rct.top < 100 or HEIGHT - 50 < obj_rct.bottom:
+        tate = False
+    for i in range(6):
+        num = 100 * i
+        if (100 + num) < obj_rct.left < (150 + num) or (100 + num) < obj_rct.right < (150 + num):
+            for j in range(5):
+                num = 100 * j
+                if 150 + num < obj_rct.top < 200 + num or 150 + num < obj_rct.bottom < 200 + num:
+                    yoko = False
+                    tate = False
+    return yoko, tate
 
-    def __init__(self, left_images, right_images, up_images, down_images, initial_position):
-        """こうかとんの画像、位置、状態を初期化する"""
-        self.images = {
-            "left": left_images,      # 左向きの画像リスト
-            "right": right_images,    # 右向きの画像リスト
-            "up": up_images,          # 上方向の画像リスト
-            "down": down_images,      # 下方向の画像リスト
-            "idle": pg.image.load("images/Kokaton/4.png")  # 静止時の画像
-        }
-        self.rect = self.images["idle"].get_rect()  # 画像の初期位置
-        self.rect.center = initial_position
-        self.current_image = self.images["idle"]  # 現在表示中の画像
-        self.frame_count = 0  # フレーム数カウンタ
+# 初期位置をランダムに決めるための関数
+def random_position() -> list:
+    """
+    盤面領域内の四隅の座標タプルをシャッフルしたリストを返す
+    戻り値：タプルのリスト
+    """
+    pos = [
+        (75, 125),
+        (75, HEIGHT - 75),
+        (WIDTH - 75, 125),
+        (WIDTH - 75, HEIGHT - 75),
+    ]
+    return random.sample(pos, len(pos))
 
-    def move(self, keys):
-        """キー入力に応じてこうかとんを移動させ、画像を切り替える"""
-        movement_vector = [0, 0]  # 各方向の移動量を格納するベクトル
-        if keys[pg.K_LEFT]:
-            movement_vector[0] += DIRECTION_DELTA[pg.K_LEFT][0]
-            self.current_image = self.get_current_image("left")
-        elif keys[pg.K_RIGHT]:
-            movement_vector[0] += DIRECTION_DELTA[pg.K_RIGHT][0]
-            self.current_image = self.get_current_image("right")
-        elif keys[pg.K_UP]:
-            movement_vector[1] += DIRECTION_DELTA[pg.K_UP][1]
-            self.current_image = self.get_current_image("up")
-        elif keys[pg.K_DOWN]:
-            movement_vector[1] += DIRECTION_DELTA[pg.K_DOWN][1]
-            self.current_image = self.get_current_image("down")
-        else:
-            self.current_image = self.images["idle"]
+# こうかとん（プレイヤー）のクラス
+class Hero:
+    """
+    ゲームキャラクター（こうかとん）に関するクラス
+    """
+    delta = {
+        pg.K_UP: (0, -50),
+        pg.K_DOWN: (0, +50),
+        pg.K_LEFT: (-50, 0),
+        pg.K_RIGHT: (+50, 0),
+    }
+    img0 = pg.transform.rotozoom(pg.image.load("images/Kokaton/3.png"), 0, 0.9)
+    img = pg.transform.flip(img0, True, False)
+    imgs = {
+        (+50, 0): img,
+        (+50, -50): pg.transform.rotozoom(img, 45, 0.9),
+        (0, -50): pg.transform.rotozoom(img, 90, 0.9),
+        (-50, -50): pg.transform.rotozoom(img0, -45, 0.9),
+        (-50, 0): img0,
+        (-50, +50): pg.transform.rotozoom(img0, 45, 0.9),
+        (0, +50): pg.transform.rotozoom(img, -90, 0.9),
+        (+50, +50): pg.transform.rotozoom(img, -45, 0.9),
+    }
+    mvct = 0
 
-        self.rect.move_ip(movement_vector)
-        self.frame_count += 1
+    def __init__(self, xy: tuple[int, int]) -> None:
+        self.img = __class__.imgs[(+50, 0)]
+        self.rct: pg.Rect = self.img.get_rect()
+        self.rct.center = xy
+        self.dire = (+50, 0)
+        self.score = 0  # スコアの初期化
 
-    def get_current_image(self, direction):
-        """指定方向ごとのフレーム画像を取得するメソッド"""
-        return self.images[direction][self.frame_count // 10 % 2]  # 10フレームごとに切り替え
-
-    def draw(self, surface):
-        """画面上に現在の画像を描画する"""
-        surface.blit(self.current_image, self.rect)
-
-
-class Score:
-    """ゲームのスコアを管理するクラス"""
-
-    def __init__(self, font_size=30, initial_score=0):
-        self.score = initial_score
-        self.font = pg.font.Font(None, font_size)
-        self.color = (255, 255, 255)  # 白色の文字
-        self.position = (10, 10)  # 左上隅に表示
-
-    def increase(self, points=1):
+    def add_score(self, points: int) -> None:
+        """スコアにポイントを追加するメソッド"""
         self.score += points
 
-    def reset(self):
-        self.score = 0
+    # キーの入力で動く処理
+    def update(self, key_lst: list[bool], screen: pg.Surface) -> None:
+        """
+        押下キーに応じてこうかとんを移動させる
+        引数1 key_lst：押下キーの真理値リスト
+        引数2 screen：画面Surface
+        """
+        sum_mv = [0, 0]
+        if __class__.mvct == 0:
+            for k, mv in __class__.delta.items():
+                if key_lst[k]:
+                    sum_mv[0] += mv[0]
+                    sum_mv[1] += mv[1]
+            self.rct.move_ip(sum_mv)
+            __class__.mvct = 15
+        elif 0 < __class__.mvct:
+            __class__.mvct -= 1
+        if check_bound(self.rct) != (True, True):
+            self.rct.move_ip(-sum_mv[0], -sum_mv[1])
+        if not (sum_mv[0] == 0 and sum_mv[1] == 0):
+            self.img = __class__.imgs[tuple(sum_mv)]
+            self.dire = sum_mv
+        screen.blit(self.img, self.rct)
 
-    def draw(self, surface):
-        score_text = self.font.render(f"Score: {self.score}", True, self.color)
-        surface.blit(score_text, self.position)
+# エイリアンのクラス
+class Enemy(pg.sprite.Sprite):
+    """
+    敵に関するクラス
+    """
+    imgs = [pg.image.load(f"images/ufo/alien{i}.png") for i in range(1, 4)]
 
+    def __init__(self, num: int, vx: tuple[int, int]) -> None:
+        """
+        敵のSurfaceの作成
+        引数1 num: 画像指定用整数
+        引数2 vx: Rectのcenter用タプル
+        """
+        super().__init__()
+        self.num = num
+        self.img = __class__.imgs[self.num]
+        self.image = pg.transform.rotozoom(self.img, 0, 0.5)
+        self.rect = self.image.get_rect()
+        self.rect.center = vx
+        self.vx, self.vy = 0, 0
+        self.mvct = 0
+        self.state = "move"
 
-def main():
-    """ゲームのメインループを制御する"""
+    # エイリアンの移動制御
+    def control(self) -> None:
+        """
+        的に関する動作制御を行う
+        """
+        img_key = {
+            (+50, 0): pg.transform.rotozoom(self.img, 0, 0.5),
+            (0, -50): pg.transform.rotozoom(self.image, 90, 1.0),
+            (-50, 0): pg.transform.flip(self.image, True, False),
+            (0, +50): pg.transform.rotozoom(self.image, -90, 1.0),
+        }
+        move_list = [
+            (0, -50),
+            (0, +50),
+            (-50, 0),
+            (+50, 0),
+        ]
+        if self.mvct == 0:
+            while True:
+                sum_mv = random.choice(move_list)
+                self.rect.move_ip(sum_mv[0], sum_mv[1])
+                if check_bound(self.rect) != (True, True):
+                    self.rect.move_ip(-sum_mv[0], -sum_mv[1])
+                    continue
+                break
+            self.image = img_key[sum_mv]
+            self.mvct = 15
+        elif self.mvct > 0:
+            self.mvct -= 1
+
+    def update(self) -> None:
+        """
+        敵の情報を更新する
+        """
+        __class__.control(self)
+
+# 爆弾（ボンバー）のクラス
+class Bomber(pg.sprite.Sprite):
+    """
+    爆弾に関するクラス
+    """
+    def __init__(self, vx: tuple[int, int], hero: Hero, enemies: pg.sprite.Group) -> None:
+        super().__init__()
+        self.bom_img = pg.image.load("images/bom/bom.png")
+        self.exp_img = pg.image.load("images/bom/explosion.png")
+        self.image = pg.transform.rotozoom(self.bom_img, 0, 0.1)
+        self.rect = self.image.get_rect()
+        self.rect.center = vx
+        self.count = 300
+        self.state = "bom"
+        self.hero = hero
+        self.enemies = enemies
+
+    # 爆弾の制御
+    def control(self) -> None:
+        """
+        爆弾の動作を処理する
+        """
+        if self.count == 0:
+            if self.state == "bom":
+                self.image = pg.transform.rotozoom(self.exp_img, 180, 0.05)
+                self.count = 30
+                self.state = "explosion"
+            else:
+                # 爆発時に敵と衝突した場合スコアを増加
+                collided_enemies = pg.sprite.spritecollide(self, self.enemies, True)
+                if collided_enemies:
+                    self.hero.add_score(100 * len(collided_enemies))
+                self.kill()
+        elif self.count > 0:
+            self.count -= 1
+            if self.state == "explosion":
+                self.image = pg.transform.rotate(self.image, 90)
+
+    def update(self) -> None:
+        """
+        爆弾の情報を更新する
+        """
+        self.control()
+
+# メイン関数
+def main() -> None:
+    """
+    ゲームのメインループを制御する
+    """
     pg.display.set_caption("ボンバーこうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("images/bg_ver.1.0.png")
-
-    # 左右、上下移動用の画像を読み込む
-    left_images = [pg.image.load("images/Kokaton/5.png"), pg.image.load("images/Kokaton/9.png")]
-    right_images = [pg.image.load("images/Kokaton/10.png"), pg.image.load("images/Kokaton/11.png")]
-    up_images = [pg.image.load("images/Kokaton/14.png"), pg.image.load("images/Kokaton/12.png")]
-    down_images = [pg.image.load("images/Kokaton/13.png"), pg.image.load("images/Kokaton/15.png")]
-
-    # こうかとんとスコアのインスタンスを作成
-    kouka_ton = KoukaTon(left_images, right_images, up_images, down_images, (300, 200))
-    score = Score()  # スコア機能
-
-    # 爆弾と敵の画像と初期位置を読み込み
-    bomb_img = pg.image.load("images/bom/bom.png")
-    bomb_rect = bomb_img.get_rect(center=(400, 400))
-    enemy_img = pg.image.load("images/bom/explosion.png")
-    enemy_rect = enemy_img.get_rect(center=(400, 400))
-
+    position = random_position()
+    hero = Hero(position[-1])
+    boms = pg.sprite.Group()
+    enemys = pg.sprite.Group()
+    for i, j in enumerate(position[:-1]):
+        enemys.add(Enemy(i, j))
     clock = pg.time.Clock()
+    tmr = 0
 
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
-            elif event.type == pg.KEYDOWN:
-                if event.key == pg.K_SPACE:  # スペースキーでスコアを増やす
-                    score.increase(10)
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_SPACE:
+                    boms.add(Bomber(hero.rct.center, hero, enemys))
 
-        # 背景画像を描画
-        screen.blit(bg_img, [0, 0])
+        screen.blit(bg_img, [0, 50])
+        key_lst = pg.key.get_pressed()
+        hero.update(key_lst, screen)
+        enemys.update()
+        enemys.draw(screen)
+        boms.update()
+        boms.draw(screen)
 
-        # 現在のキーの状態を取得
-        keys = pg.key.get_pressed()
-        kouka_ton.move(keys)  # こうかとんの移動処理
-        kouka_ton.draw(screen)  # こうかとんを画面に描画
+        # スコアを表示する処理
+        font = pg.font.SysFont("Arial", 24, bold=False)
+        score_surf = font.render(f"Score: {hero.score}", True, (200, 200, 200))
+        screen.blit(score_surf, (5, 5))
 
-        # 爆弾と敵の画像を描画
-        screen.blit(bomb_img, bomb_rect)
-        screen.blit(enemy_img, enemy_rect)
-
-        # 爆弾と敵が重なる場合スコアを加算
-        if bomb_rect.colliderect(enemy_rect):
-            score.increase(10)
-
-        # スコアを画面に描画
-        score.draw(screen)
-
-        pg.display.update()  # 画面を更新
-        clock.tick(50)  # フレームレートを制御
-
+        pg.display.update()
+        tmr += 1
+        clock.tick(60)
 
 if __name__ == "__main__":
     pg.init()
