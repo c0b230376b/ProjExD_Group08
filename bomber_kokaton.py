@@ -48,16 +48,16 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
 
 
 def game_over(scr: pg.Surface) -> None:
-    bo = pg.Surface((WIDTH, HEIGHT))
-    bo.set_alpha(205)
-    pg.draw.rect(bo, (0, 0, 0), (0, 0, WIDTH, HEIGHT))
-    fonto = pg.font.Font(None, 70)
-    txt = fonto.render("Game Over", True, (255, 255, 255))
-    kk_cry_img = pg.image.load("fig/8.png")
-    scr.blit(bo, [0, 0])
-    scr.blit(txt, [(WIDTH / 2) - 140, (HEIGHT / 2) - 40])
-    scr.blit(kk_cry_img, [(WIDTH / 2) - 205, (HEIGHT / 2) - 50])
-    scr.blit(kk_cry_img, [(WIDTH / 2) + 145, (HEIGHT / 2) - 50])
+    fonto = pg.font.SysFont("hg正楷書体pro", 70)
+    gameover_txt = fonto.render("GAME OVER", True, (255, 0, 0))
+    continue_txt = fonto.render("continue", True, (255, 255, 255))
+    tend_txt = fonto.render("end", True, (255, 255, 255))
+    picture = pg.image.load("hoshizora.png")  # 画像のパスを修正
+    picture = pg.transform.scale(picture, (WIDTH, HEIGHT))  # 画面サイズにリサイズ
+    scr.blit(picture, (0, 0))  # 背景として画像を描画
+    scr.blit(gameover_txt, [(WIDTH / 2) - (gameover_txt.get_width() / 2), HEIGHT / 4])
+    scr.blit(continue_txt, [(WIDTH / 2) - (continue_txt.get_width() / 2), HEIGHT / 2.3])
+    scr.blit(tend_txt, [(WIDTH / 2) - (tend_txt.get_width() / 2), HEIGHT / 1.8])
     pg.display.update()
     time.sleep(5)
 
