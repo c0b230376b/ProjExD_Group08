@@ -172,6 +172,47 @@ class Enemy(pg.sprite.Sprite):
         __class__.control(self)
 
 
+class Bomber(pg.sprite.Sprite):
+    """
+    爆弾に関するクラス
+    """
+    def __init__(self, vx: tuple[int, int]) -> None:
+        """
+        爆弾のSurfaceを作成する
+        引数 vx heloのrectの座標
+        """
+        super().__init__()
+        self.bom_img = pg.image.load("images/bom/bom.png") # 爆弾画像
+        self.exp_img = pg.image.load("images/bom/explosion.png") # 爆発画像
+        self.image = pg.transform.rotozoom(self.bom_img, 0, 0.1)
+        self.rect = self.image.get_rect()
+        self.rect.center = vx
+        self.count = 300 # 爆発までの待機時間5秒
+        self.state = "bom" # bombとexplosionでの管理用
+
+    def control(self) -> None:
+        """
+        爆弾の動作を処理する
+        """
+        if self.count == 0: # カウント終了時
+            if self.state == "bom":
+                self.image = pg.transform.rotozoom(self.exp_img, 180, 0.05)
+                self.count = 30 # 0.5秒
+                self.state = "explosion"
+            else:
+                self.kill()
+        elif self.count > 0: # カウント中
+            self.count -= 1
+            if self.state == "explosion": # 爆発後
+                self.image = pg.transform.rotate(self.image, 90) # 爆発表現
+
+    def update(self) -> None:
+        """
+        爆弾の情報を更新する
+        """
+        self.control()
+
+
 def main() -> None:
     """
     ゲームのメインループを制御する
@@ -179,6 +220,8 @@ def main() -> None:
     pg.display.set_caption("ボンバーこうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("images/bg_ver.1.0.png") # 背景(完成版)
+    hero = Hero((75, 125))
+    boms = pg.sprite.Group() # 爆弾クラスのグループ作成
     position = random_position()
     hero = Hero(position[-1]) # 主人公(操作キャラ)
     enemys = pg.sprite.Group() # 敵のスプライトグループ
@@ -191,13 +234,16 @@ def main() -> None:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
+            if event.type == pg.KEYDOWN: # スペースキーで爆弾設置
+                if event.key == pg.K_SPACE:
+                    boms.add(Bomber(hero.rct.center))
 
         screen.blit(bg_img, [0, 50])
 
         key_lst = pg.key.get_pressed()
         hero.update(key_lst, screen)
-        enemys.update()
-        enemys.draw(screen)
+        boms.update() # 爆弾グループの更新
+        boms.draw(screen)
 
         pg.display.update()
         tmr += 1
