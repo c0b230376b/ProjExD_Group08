@@ -1,22 +1,33 @@
 import os
 import sys
 import pygame as pg
+from typing import Dict, List, Tuple
 
 # ゲームウィンドウのサイズ設定
-WIDTH, HEIGHT = 750, 700
+WIDTH, HEIGHT = 750, 750
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # 方向キーに対応する移動量
-DIRECTION_DELTA = {
+DIRECTION_DELTA: Dict[int, Tuple[int, int]] = {
     pg.K_UP: (0, -5),
     pg.K_DOWN: (0, 5),
     pg.K_LEFT: (-5, 0),
     pg.K_RIGHT: (5, 0),
 }
 
-def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
+def check_bound(obj_rct: pg.Rect) -> Tuple[bool, bool]:
     """
     オブジェクトが画面内にあるかを判定する関数。
+
+    Parameters:
+    obj_rct (pg.Rect): チェック対象のオブジェクトの矩形領域 (pygame.Rectオブジェクト)。
+
+    Returns:
+    Tuple[bool, bool]: x方向とy方向の境界内かどうかを表す2つのブール値を含むタプル。
+                       - (True, True): オブジェクトは画面内にある。
+                       - (False, True): オブジェクトは横方向に画面外。
+                       - (True, False): オブジェクトは縦方向に画面外。
+                       - (False, False): オブジェクトは両方向に画面外。
     """
     yoko, tate = True, True
     if obj_rct.left < 50 or WIDTH - 50 < obj_rct.right:
@@ -35,26 +46,34 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
 
 class Hero:
     """
-    ゲームキャラクター「こうかとん」の動き、画像切り替え、描画を管理するクラス
+    ゲームキャラクター「こうかとん」の動き、画像切り替え、描画を管理するクラス。
     """
-    def __init__(self, initial_position):
+
+    def __init__(self, initial_position: Tuple[int, int]) -> None:
         """
         Heroクラスのインスタンスを初期化し、こうかとんの画像、位置、初期状態を設定する。
+
+        Parameters:
+        initial_position (Tuple[int, int]): こうかとんの初期位置を表すタプル (x座標, y座標)。
         """
-        self.images = {
+        self.images: Dict[str, List[pg.Surface]] = {
             "left": [pg.transform.rotozoom(pg.image.load("fig/5.png"), 0, 0.7), pg.transform.rotozoom(pg.image.load("fig/9.png"), 0, 0.7)],
             "right": [pg.transform.rotozoom(pg.image.load("fig/10.png"), 0, 0.7), pg.transform.rotozoom(pg.image.load("fig/11.png"), 0, 0.7)],
             "up": [pg.transform.rotozoom(pg.image.load("fig/14.png"), 0, 0.7), pg.transform.rotozoom(pg.image.load("fig/12.png"), 0, 0.7)],
             "down": [pg.transform.rotozoom(pg.image.load("fig/13.png"), 0, 0.7), pg.transform.rotozoom(pg.image.load("fig/15.png"), 0, 0.7)],
-            "idle": pg.transform.rotozoom(pg.image.load("fig/4.png"), 0, 0.7)  # 按缩小比例
+            "idle": pg.transform.rotozoom(pg.image.load("fig/4.png"), 0, 0.7)
         }
-        self.rect = self.images["idle"].get_rect(center=initial_position)
-        self.direction = "idle"  # 初期方向
-        self.frame_count = 0  # アニメーションフレーム用カウンタ
+        self.rect: pg.Rect = self.images["idle"].get_rect(center=initial_position)
+        self.direction: str = "idle"  # 初期方向
+        self.frame_count: int = 0  # アニメーションフレーム用カウンタ
 
-    def update(self, keys, screen):
+    def update(self, keys: pg.key.ScancodeWrapper, screen: pg.Surface) -> None:
         """
         こうかとんの位置と画像を更新し、画面に描画する。
+
+        Parameters:
+        keys (pg.key.ScancodeWrapper): プレイヤーからのキー入力情報。
+        screen (pg.Surface): 描画対象のpygameの画面Surface。
         """
         movement_vector = [0, 0]
         if keys[pg.K_LEFT]:
@@ -87,7 +106,7 @@ class Hero:
 
         screen.blit(current_image, self.rect)
 
-def main():
+def main() -> None:
     """
     ゲームのメインループを制御し、背景画像とこうかとんを表示する。
     """
