@@ -59,7 +59,7 @@ class Hero:
     }
     mvct = 0 # 移動時のためのクールタイム
 
-    def __init__(self, xy: tuple[int, int]): # こうかとんの画像、位置、状態を初期化する
+    def __init__(self, xy: tuple[int, int]) -> None: # こうかとんの画像、位置、状態を初期化する
         """
         こうかとん画像Surfaceを生成する
         引数 xy：こうかとん画像の初期位置座標タプル
@@ -69,7 +69,7 @@ class Hero:
         self.rct.center = xy
         self.dire = (+50, 0)
 
-    def change_img(self, num: int, screen: pg.Surface):
+    def change_img(self, num: int, screen: pg.Surface) -> None:
         """
         こうかとん画像を切り替え，画面に転送する
         引数1 num：こうかとん画像ファイル名の番号
@@ -78,7 +78,7 @@ class Hero:
         self.img = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.9)
         screen.blit(self.img, self.rct)
 
-    def update(self, key_lst: list[bool], screen: pg.Surface):
+    def update(self, key_lst: list[bool], screen: pg.Surface) -> None:
         """
         押下キーに応じてこうかとんを移動させる
         引数1 key_lst：押下キーの真理値リスト
@@ -104,7 +104,7 @@ class Hero:
         screen.blit(self.img, self.rct)
 
 
-def main():
+def main() -> None:
     """
     ゲームのメインループを制御する
     """
