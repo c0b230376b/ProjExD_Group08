@@ -243,7 +243,7 @@ def main() -> None:
         key_lst = pg.key.get_pressed()
         hero.update(key_lst, screen)
         enemys.update() # 敵グループの更新
-        enemys.draw(screen) # 
+        enemys.draw(screen)
         boms.update() # 爆弾グループの更新
         boms.draw(screen)
 
