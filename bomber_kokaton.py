@@ -119,19 +119,24 @@ class Bomber(pg.sprite.Sprite):
         self.image = pg.transform.rotozoom(self.bom_img, 0, 0.1)
         self.rect = self.image.get_rect()
         self.rect.center = vx
-        self.count = 600 # 爆発までの待機時間
+        self.count = 300 # 爆発までの待機時間5秒
         self.state = "bom" # bombとexplosionでの管理用
 
     def control(self):
+        """
+        爆弾の動作を処理する
+        """
         if self.count == 0:
             if self.state == "bom":
-                self.image = pg.transform.rotozoom(self.exp_img, 0, 0.05)
+                self.image = pg.transform.rotozoom(self.exp_img, 180, 0.05)
                 self.count = 30 # 0.5秒
                 self.state = "explosion"
             else:
                 self.kill()
         elif self.count > 0:
             self.count -= 1
+            if self.state == "explosion":
+                self.image = pg.transform.rotate(self.image, 90) # 爆発表現
 
     def update(self):
         """
@@ -161,9 +166,6 @@ def main():
                     boms.add(Bomber(hero.rct.center))
 
         screen.blit(bg_img, [0, 50])
-
-        for i in boms:
-            print(i.count)
 
         key_lst = pg.key.get_pressed()
         hero.update(key_lst, screen)
