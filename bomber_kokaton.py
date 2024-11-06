@@ -358,19 +358,19 @@ def main() -> None:
 
     pg.font.init() # フォントの初期化
     font = pg.font.Font(None, 36) # フォントを作成
-    start_ticks, time_limit = initialize_timer(180) # 180秒(3分)に設定
+    start_ticks, time_limit = initialize_timer(10) # 180秒(3分)に設定
 
-    while show_timer(screen, font, start_ticks, time_limit):
+    while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:  # スペースキーで爆弾設置
                     boms.add(Bomber(hero.rct.center, hero, enemys))
+        screen.blit(bg_img, [0, 50])
 
         score.enemy_to_bom(boms, enemys) # 爆弾と敵の衝突判定
 
-        screen.blit(bg_img, [0, 50])
         hero.update(screen) # 主人公(操作キャラ)クラスの更新
         enemys.update() # 敵グループの更新
         enemys.draw(screen)
@@ -378,10 +378,11 @@ def main() -> None:
         boms.draw(screen)
         score.update(screen, font) # スコア表示
 
+        if not show_timer(screen, font, start_ticks, time_limit): # 制限時間
+            return
+
         pg.display.update()
         clock.tick(60) # framerateを60に設定
-    print("time up")
-    return
 
 
 if __name__ == "__main__":
