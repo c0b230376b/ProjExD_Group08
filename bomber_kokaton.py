@@ -29,9 +29,7 @@ class Score:
 
 # こうかとん（プレイヤー）のクラス
 class Hero:
-    """
-    ゲームキャラクター（こうかとん）に関するクラス
-    """
+    """ゲームキャラクター（こうかとん）に関するクラス"""
     delta = {
         pg.K_UP: (0, -50),
         pg.K_DOWN: (0, +50),
@@ -64,26 +62,28 @@ class Hero:
         self.score += points
 
     # キーの入力で動く処理
-    def update(self, key_lst: list[bool], screen: pg.Surface) -> None:
+    def update(self, screen: pg.Surface) -> None:
         """
         押下キーに応じてこうかとんを移動させる
         引数1 key_lst：押下キーの真理値リスト
         引数2 screen：画面Surface
         """
         sum_mv = [0, 0]
+        key_lst = pg.key.get_pressed()
+
         if __class__.mvct == 0:
             for k, mv in __class__.delta.items():
                 if key_lst[k]:
                     sum_mv[0] += mv[0]
                     sum_mv[1] += mv[1]
-                    if 0 != sum_mv[0] and 0 != sum_mv[1]:
-                        print(8)
+                    if 0 != sum_mv[0] and 0 != sum_mv[1]: # 斜め移動防止用
                         sum_mv[0] = 0
                         sum_mv[1] = 0
-            self.rct.move_ip(sum_mv)
-            __class__.mvct = 15
+            self.rct.move_ip(sum_mv) # 移動
+            __class__.mvct = 15 # 0.25秒の待機
         elif 0 < __class__.mvct:
             __class__.mvct -= 1
+
         if check_bound(self.rct) != (True, True):
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
@@ -203,14 +203,37 @@ class Score:
     スコアの追跡と更新を処理する
     """
     def __init__(self) -> None:
+        """初期スコア変数を設定"""
         self.score = 0  # 初期スコアは0
 
     def add_score(self, points: int) -> None:
+        """スコア加算"""
         self.score += points  # スコアを加算
         print(f"Score: {self.score}")  # 現在のスコアを表示（デバッグ用）
 
-    def get_score(self) -> int:
-        return self.score  # 現在のスコアを返す
+    def enemy_to_bom(self, boms: pg.sprite.Group, enemys: pg.sprite.Group) -> None:
+        """
+        敵と爆弾の接敵確認
+        引数1 boms: 爆弾のグループ
+        引数2 enemys: 敵のグループ
+        """
+        for bom in boms:
+            if bom.state == "explosion":
+                for enemy in enemys:
+                    if bom.rect.colliderect(enemy.rect):  # 衝突判定
+                        self.add_score(100)  # スコアを加算
+                        enemy.kill()  # 敵を消去
+                        break
+
+    def update(self, screen: pg.Surface, font: pg.font) -> None:
+        """
+        スコア表示情報を更新する
+        引数1 screen: 画面Surface
+        引数2 font: 文字font
+        """
+        screen.fill((0,0,0), (10,10,150,36))
+        score_text = font.render(f"Score: {self.score}", True, (255, 255, 255))
+        screen.blit(score_text, (10, 10))  # スコアを画面の左上に描画
 
 
 # 制限時間初期化関数
@@ -318,7 +341,7 @@ def show_title_screen(screen: pg.Surface) -> None:
 
 
 # 初期位置をランダムに決めるための関数
-def random_position() -> list:
+def random_position() -> list[tuple, tuple, tuple, tuple]:
     """
     盤面領域内の四隅の座標タプルをシャッフルしたリストを返す
     戻り値：タプルのリスト
@@ -341,9 +364,9 @@ def main() -> None:
     show_title_screen(screen) # タイトル画面表示
     bg_img = pg.image.load("images/bg_ver.1.0.png")  # 背景(完成版)
 
-    hero = Hero((75, 125))  # 主人公の初期位置
+    position = random_position() # 敵味方の初期位置
+    hero = Hero(position[-1])  # 主人公の初期位置
     boms = pg.sprite.Group()  # 爆弾クラスのグループ作成
-    position = random_position()
     enemys = pg.sprite.Group()  # 敵のスプライトグループ
     for i, j in enumerate(position[:-1]):
         enemys.add(Enemy(i, j))  # 敵のインスタンス生成
@@ -352,7 +375,7 @@ def main() -> None:
 
     pg.font.init() # フォントの初期化
     font = pg.font.Font(None, 36) # フォントを作成
-    start_ticks, time_limit = initialize_timer(180)
+    start_ticks, time_limit = initialize_timer(180) # 180秒(3分)に設定
 
     while show_timer(screen, font, start_ticks, time_limit):
         for event in pg.event.get():
@@ -362,27 +385,15 @@ def main() -> None:
                 if event.key == pg.K_SPACE:  # スペースキーで爆弾設置
                     boms.add(Bomber(hero.rct.center, hero, enemys))
 
-        # 爆弾と敵の衝突判定
-        for bom in boms:
-            if bom.state == "explosion":
-                for enemy in enemys:
-                    if bom.rect.colliderect(enemy.rect):  # 衝突判定
-                        score.add_score(100)  # スコアを加算
-                        enemy.kill()  # 敵を消去
-                        break
-
-        # スコアの表示
-        screen.fill((0,0,0), (10,10,150,36))
-        score_text = font.render(f"Score: {score.get_score()}", True, (255, 255, 255))
-        screen.blit(score_text, (10, 10))  # スコアを画面の左上に描画
+        score.enemy_to_bom(boms, enemys) # 爆弾と敵の衝突判定
 
         screen.blit(bg_img, [0, 50])
-        key_lst = pg.key.get_pressed()
-        hero.update(key_lst, screen)
+        hero.update(screen) # 主人公(操作キャラ)クラスの更新
         enemys.update() # 敵グループの更新
         enemys.draw(screen)
         boms.update() # 爆弾グループの更新
         boms.draw(screen)
+        score.update(screen, font) # スコア表示
 
         pg.display.update()
         clock.tick(60) # framerateを60に設定
