@@ -217,11 +217,8 @@ class Score:
 def initialize_timer(time_limit: int) -> tuple:
     """
     タイマーの初期設定
-    引数:
-    time_limit: 制限時間（秒）
-    
-    戻り値:
-    タイマーの開始時刻, 制限時間
+    引数: time_limit: 制限時間（秒）
+    戻り値: タイマーの開始時刻, 制限時間
     """
     start_ticks = pg.time.get_ticks()
     return start_ticks, time_limit
@@ -343,6 +340,7 @@ def main() -> None:
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     show_title_screen(screen) # タイトル画面表示
     bg_img = pg.image.load("images/bg_ver.1.0.png")  # 背景(完成版)
+
     hero = Hero((75, 125))  # 主人公の初期位置
     boms = pg.sprite.Group()  # 爆弾クラスのグループ作成
     position = random_position()
@@ -351,14 +349,12 @@ def main() -> None:
         enemys.add(Enemy(i, j))  # 敵のインスタンス生成
     clock = pg.time.Clock()
     score = Score()  # スコアオブジェクトを作成
+
     pg.font.init() # フォントの初期化
     font = pg.font.Font(None, 36) # フォントを作成
-
-    pg.font.init() # フォントの初期化
-    font = pg.font.Font(None, 36)  # フォントを作成
     start_ticks, time_limit = initialize_timer(180)
 
-    while True:
+    while show_timer(screen, font, start_ticks, time_limit):
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
@@ -379,8 +375,6 @@ def main() -> None:
         screen.fill((0,0,0), (10,10,150,36))
         score_text = font.render(f"Score: {score.get_score()}", True, (255, 255, 255))
         screen.blit(score_text, (10, 10))  # スコアを画面の左上に描画
-        if not show_timer(screen, font, start_ticks, time_limit):
-            return
 
         screen.blit(bg_img, [0, 50])
         key_lst = pg.key.get_pressed()
@@ -392,6 +386,8 @@ def main() -> None:
 
         pg.display.update()
         clock.tick(60) # framerateを60に設定
+    print("time up")
+    return
 
 
 if __name__ == "__main__":
