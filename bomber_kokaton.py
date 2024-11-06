@@ -10,23 +10,6 @@ WIDTH, HEIGHT = 750, 700
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
-# スコア表示のクラス
-class Score:
-    """
-    スコア管理クラス
-    スコアの追跡と更新を処理する
-    """
-    def __init__(self) -> None:
-        self.score = 0  # 初期スコアは0
-
-    def add_score(self, points: int) -> None:
-        self.score += points  # スコアを加算
-        print(f"Score: {self.score}")  # 現在のスコアを表示（デバッグ用）
-
-    def get_score(self) -> int:
-        return self.score  # 現在のスコアを返す
-
-
 # こうかとん（プレイヤー）のクラス
 class Hero:
     """ゲームキャラクター（こうかとん）に関するクラス"""
