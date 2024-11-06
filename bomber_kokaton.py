@@ -10,23 +10,6 @@ WIDTH, HEIGHT = 750, 700
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
-# スコア表示のクラス
-class Score:
-    """
-    スコア管理クラス
-    スコアの追跡と更新を処理する
-    """
-    def __init__(self) -> None:
-        self.score = 0  # 初期スコアは0
-
-    def add_score(self, points: int) -> None:
-        self.score += points  # スコアを加算
-        print(f"Score: {self.score}")  # 現在のスコアを表示（デバッグ用）
-
-    def get_score(self) -> int:
-        return self.score  # 現在のスコアを返す
-
-
 # こうかとん（プレイヤー）のクラス
 class Hero:
     """ゲームキャラクター（こうかとん）に関するクラス"""
@@ -157,7 +140,13 @@ class Bomber(pg.sprite.Sprite):
     """
     爆弾に関するクラス
     """
-    def __init__(self, vx: tuple[int, int], hero: Hero, enemies: pg.sprite.Group) -> None:
+    def __init__(self, vx: tuple[int, int], hero: Hero, enemies: pg.sprite.Group, bom_effects: pg.sprite.Group) -> None:
+        """
+        引数1: vx:heroのrect座標
+        引数2: hero: Heloのインスタンス
+        引数3: enemies: 敵グループ
+        引数4: bom_effects: 爆発エフェクトグループ
+        """
         super().__init__()
         self.bom_img = pg.image.load("images/bom/bom.png")
         self.exp_img = pg.image.load("images/bom/explosion.png")
@@ -168,6 +157,7 @@ class Bomber(pg.sprite.Sprite):
         self.state = "bom"
         self.hero = hero
         self.enemies = enemies
+        self.bom_effects = bom_effects
 
     def control(self) -> None:
         """
@@ -178,6 +168,7 @@ class Bomber(pg.sprite.Sprite):
                 self.image = pg.transform.rotozoom(self.exp_img, 180, 0.05)
                 self.count = 30
                 self.state = "explosion"
+                self.call_effect(self.bom_effects) # 爆発エフェクト呼び出し
             else:
                 # 爆発時に敵と衝突した場合スコアを増加
                 collided_enemies = pg.sprite.spritecollide(self, self.enemies, True)
@@ -189,11 +180,22 @@ class Bomber(pg.sprite.Sprite):
             if self.state == "explosion":
                 self.image = pg.transform.rotate(self.image, 90)
 
+    def call_effect(self):
+        """BomberZoneクラスを呼び出す"""
+
     def update(self) -> None:
         """
         爆弾の情報を更新する
         """
         self.control()
+
+
+class BomberZone(pg.sprite.Sprite):
+    """爆発エフェクトに関するクラス"""
+    img = pg.image.load("explosion/burn.png")
+
+    def __init__(self):
+        pass
 
 
 # スコア表示クラス
@@ -367,6 +369,7 @@ def main() -> None:
     position = random_position() # 敵味方の初期位置
     hero = Hero(position[-1])  # 主人公の初期位置
     boms = pg.sprite.Group()  # 爆弾クラスのグループ作成
+    bom_effects = pg.sprite.Group() # 爆弾のエフェクトのブループ
     enemys = pg.sprite.Group()  # 敵のスプライトグループ
     for i, j in enumerate(position[:-1]):
         enemys.add(Enemy(i, j))  # 敵のインスタンス生成
@@ -383,7 +386,7 @@ def main() -> None:
                 return
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:  # スペースキーで爆弾設置
-                    boms.add(Bomber(hero.rct.center, hero, enemys))
+                    boms.add(Bomber(hero.rct.center, hero, enemys, bom_effects))
 
         score.enemy_to_bom(boms, enemys) # 爆弾と敵の衝突判定
 
