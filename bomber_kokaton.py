@@ -132,7 +132,7 @@ class Enemy(pg.sprite.Sprite):
         """
         敵の情報を更新する
         """
-        __class__.control(self)
+        self.control()
 
 
 # 爆弾（ボンバー）のクラス
@@ -217,6 +217,63 @@ class Score:
         screen.fill((0,0,0), (10,10,150,36))
         score_text = font.render(f"Score: {self.score}", True, (255, 255, 255))
         screen.blit(score_text, (10, 10))  # スコアを画面の左上に描画
+
+
+# 敵の動きを三秒間停止させるクラス
+class TimeStop:
+    """
+    タイムストップクラス
+    Shiftキーを押したときに敵の動きを停止し、3秒後に再開する。
+    """
+    def __init__(self, score: Score) -> None:
+        """
+        タイムストップ機能の初期設定
+        引数: score: スコアクラスのインスタンス
+        """
+        self.active = False        # タイムストップが有効かどうか
+        self.start_time = 0        # タイムストップ開始時間
+        self.duration = 3000       # タイムストップ持続時間（ミリ秒）
+        self.score = score         # スコアオブジェクトへの参照
+        original_image = pg.image.load("fig/timestop.png")
+        scale_factor = 0.5
+        new_size = (int(original_image.get_width() * scale_factor),
+                    int(original_image.get_height() * scale_factor))
+        self.image = pg.transform.scale(original_image, new_size)
+
+    def activate(self) -> None:
+        """
+        タイムストップを発動し、スコアを消費する
+        """
+        if self.score.score >= 10 and not self.active:
+            self.active = True
+            self.start_time = pg.time.get_ticks()
+            self.score.add_score(-10)  # 10ポイント消費
+
+    def update(self, enemys: pg.sprite.Group, screen: pg.Surface) -> None:
+        """
+        タイムストップ状態の更新
+        敵の動きを制御し、時間経過後に再開する。
+        引数: enemys: 敵のスプライトグループ, screen: 画面Surface
+        """
+        current_time = pg.time.get_ticks()
+
+        if self.active:
+            # タイムストップが有効な場合、敵の動きを止める
+            for enemy in enemys:
+                enemy.stopped = True  # 停止フラグを設定
+
+            # タイムストップ画像を画面の中央に描画
+            screen_center = (screen.get_width() // 2, screen.get_height() // 2)
+            image_rect = self.image.get_rect(center=screen_center)
+            screen.blit(self.image, image_rect)
+
+            # 持続時間が経過したらタイムストップを解除
+            if current_time - self.start_time >= self.duration:
+                self.active = False  # タイムストップ無効化
+        else:
+            # タイムストップが無効になった場合、敵の通常動作を再開
+            for enemy in enemys:
+                enemy.stopped = False  # 停止フラグを解除
 
 
 # 制限時間初期化関数
@@ -337,59 +394,6 @@ def random_position() -> list[tuple, tuple, tuple, tuple]:
     ]
     return random.sample(pos, len(pos))
 
-class TimeStop:
-    """
-    タイムストップクラス
-    Shiftキーを押したときに敵の動きを停止し、3秒後に再開する。
-    """
-    def __init__(self, score: Score) -> None:
-        """
-        タイムストップ機能の初期設定
-        引数: score: スコアクラスのインスタンス
-        """
-        self.active = False        # タイムストップが有効かどうか
-        self.start_time = 0        # タイムストップ開始時間
-        self.duration = 3000       # タイムストップ持続時間（ミリ秒）
-        self.score = score         # スコアオブジェクトへの参照
-        original_image = pg.image.load("fig/timestop.png")
-        scale_factor = 0.5 
-        new_size = (int(original_image.get_width() * scale_factor), 
-                    int(original_image.get_height() * scale_factor))
-        self.image = pg.transform.scale(original_image, new_size) 
-    def activate(self) -> None:
-        """
-        タイムストップを発動し、スコアを消費する
-        """
-        if self.score.score >= 10 and not self.active:
-            self.active = True
-            self.start_time = pg.time.get_ticks()
-            self.score.add_score(-10)  # 10ポイント消費
-
-    def update(self, enemys: pg.sprite.Group, screen: pg.Surface) -> None:
-        """
-        タイムストップ状態の更新
-        敵の動きを制御し、時間経過後に再開する。
-        引数: enemys: 敵のスプライトグループ, screen: 画面Surface
-        """
-        current_time = pg.time.get_ticks()
-
-        if self.active:
-            # タイムストップが有効な場合、敵の動きを止める
-            for enemy in enemys:
-                enemy.stopped = True  # 停止フラグを設定
-
-            # タイムストップ画像を画面の中央に描画
-            screen_center = (screen.get_width() // 2, screen.get_height() // 2)
-            image_rect = self.image.get_rect(center=screen_center)
-            screen.blit(self.image, image_rect)
-
-            # 持続時間が経過したらタイムストップを解除
-            if current_time - self.start_time >= self.duration:
-                self.active = False  # タイムストップ無効化
-        else:
-            # タイムストップが無効になった場合、敵の通常動作を再開
-            for enemy in enemys:
-                enemy.stopped = False  # 停止フラグを解除
 
 def main() -> None:
     """
@@ -447,6 +451,7 @@ def main() -> None:
 
         pg.display.update()
         clock.tick(60) # framerateを60に設定
+
 
 if __name__ == "__main__":
     pg.init()
