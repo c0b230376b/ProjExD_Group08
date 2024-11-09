@@ -152,6 +152,7 @@ class Bomber(pg.sprite.Sprite):
         self.exp_img = pg.image.load("images/bom/explosion.png")
         self.image = pg.transform.rotozoom(self.bom_img, 0, 0.1)
         self.rect = self.image.get_rect()
+        self.vx = vx
         self.rect.center = vx
         self.count = 300
         self.state = "bom"
@@ -182,6 +183,11 @@ class Bomber(pg.sprite.Sprite):
 
     def call_effect(self):
         """BomberZoneクラスを呼び出す"""
+        test = pg.Surface((50, 50)).get_rect()
+
+        for i in range(4):
+            for j in range(1, 4):
+                test.center = (self.vx[0] , self.vx[1])
 
     def update(self) -> None:
         """
