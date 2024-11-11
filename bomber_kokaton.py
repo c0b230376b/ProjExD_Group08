@@ -200,7 +200,9 @@ class Bomber(pg.sprite.Sprite):
                 if check != (True, True): # 盤面領域外の場合
                     break
                 count  += 1 # 生成数加算
-            keep.append(count) # 生成数確定
+            # keep.append(count) # 生成数確定
+            if count > 0:
+                self.bom_effects.add(BomberZone(self.vx, count, i))
 
     def update(self) -> None:
         """
@@ -209,12 +211,26 @@ class Bomber(pg.sprite.Sprite):
         self.control()
 
 
-# class BomberZone(pg.sprite.Sprite):
-#     """爆発エフェクトに関するクラス"""
-#     img = pg.image.load("explosion/burn.png")
+class BomberZone(pg.sprite.Sprite):
+    """爆発エフェクトに関するクラス"""
+    img = pg.image.load("images/explosion/burn.png")
+    zone = {0:[0, 50],  # 上
+            1:[50, 0],  # 右
+            2:[0, 50],  # 下
+            3:[50, 0],  # 左
+            }
 
-#     def __init__(self):
-#         pass
+    def __init__(self, vx: tuple[int, int], num: int, xy):
+        """
+        爆発エフェクトのレクト生成
+        引数1 vx: 爆発エフェクト基準
+        引数2 num: エフェクト範囲のマス数
+        引数3 xy: 生成方向(0, 1, 2, 3で判定)
+        """
+        super().__init__()
+        vec = __class__.zone[num][0]
+        self.zone = pg.Surface((50 + (__class__.zone[xy][0] * (num - 1)), 50 + (__class__.zone[xy][1] * (num - 1))))
+        # print(self.zone.get_size())
 
 
 # スコア表示クラス
