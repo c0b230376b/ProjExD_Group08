@@ -90,6 +90,8 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
                     yoko = False
                     tate = False
     return yoko, tate
+
+
 def game_over(scr: pg.Surface) -> None:
     fonto = pg.font.SysFont("hg正楷書体pro", 70)
     gameover_txt = fonto.render("GAME OVER", True, (255, 0, 0))
@@ -339,7 +341,7 @@ def main() -> None:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
-            if event.type == pg.KEYDOWN:
+            if event.type == pg.KEYDOWN: 
                 if event.key == pg.K_SPACE:  # スペースキーで爆弾設置
                     boms.add(Bomber(hero.rct.center, hero, enemys))  # 传递 hero 和 enemies
         screen.blit(bg_img, [0, 50])
