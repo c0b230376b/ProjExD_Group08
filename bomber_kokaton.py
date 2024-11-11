@@ -169,7 +169,7 @@ class Bomber(pg.sprite.Sprite):
                 self.image = pg.transform.rotozoom(self.exp_img, 180, 0.05)
                 self.count = 30
                 self.state = "explosion"
-                self.call_effect(self.bom_effects) # 爆発エフェクト呼び出し
+                self.call_effect() # 爆発エフェクト呼び出し
             else:
                 # 爆発時に敵と衝突した場合スコアを増加
                 collided_enemies = pg.sprite.spritecollide(self, self.enemies, True)
@@ -183,11 +183,24 @@ class Bomber(pg.sprite.Sprite):
 
     def call_effect(self):
         """BomberZoneクラスを呼び出す"""
-        test = pg.Surface((50, 50)).get_rect()
+        test = pg.Surface((50, 50)).get_rect() # 爆発範囲想定用
+        zone = {0:[0, -50],  # 上
+                1:[+50, 0],  # 右
+                2:[0, 50],  # 下
+                3:[-50, 0],  # 左
+                }
+        keep = [] # 引数用(爆発エフェクト生成数を記録)
 
+        # 盤面領域判定による爆発エフェクト生成数決定
         for i in range(4):
+            count = 0 # 一方向の生成数(上限3)
             for j in range(1, 4):
-                test.center = (self.vx[0] , self.vx[1])
+                test.center = (self.vx[0] + zone[i][0] * j , self.vx[1] + zone[i][1] * j) # 50*50をチェック
+                check = check_bound(test)
+                if check != (True, True): # 盤面領域外の場合
+                    break
+                count  += 1 # 生成数加算
+            keep.append(count) # 生成数確定
 
     def update(self) -> None:
         """
@@ -196,12 +209,12 @@ class Bomber(pg.sprite.Sprite):
         self.control()
 
 
-class BomberZone(pg.sprite.Sprite):
-    """爆発エフェクトに関するクラス"""
-    img = pg.image.load("explosion/burn.png")
+# class BomberZone(pg.sprite.Sprite):
+#     """爆発エフェクトに関するクラス"""
+#     img = pg.image.load("explosion/burn.png")
 
-    def __init__(self):
-        pass
+#     def __init__(self):
+#         pass
 
 
 # スコア表示クラス
