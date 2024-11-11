@@ -200,9 +200,8 @@ class Bomber(pg.sprite.Sprite):
                 if check != (True, True): # 盤面領域外の場合
                     break
                 count  += 1 # 生成数加算
-            # keep.append(count) # 生成数確定
             if count > 0:
-                self.bom_effects.add(BomberZone(self.vx, count, i))
+                self.bom_effects.add(BomberZone(self.vx, count, i, self.count))
 
     def update(self) -> None:
         """
@@ -220,18 +219,30 @@ class BomberZone(pg.sprite.Sprite):
             3:[50, 0],  # 左
             }
 
-    def __init__(self, vx: tuple[int, int], num: int, xy):
+    def __init__(self, vx: tuple[int, int], num: int, xy, limit: int) -> None:
         """
         爆発エフェクトのレクト生成
         引数1 vx: 爆発エフェクト基準
         引数2 num: エフェクト範囲のマス数
         引数3 xy: 生成方向(0, 1, 2, 3で判定)
+        引数4 limit: 爆発エフェクトの存在時間
         """
         super().__init__()
-        vec = __class__.zone[num][0]
-        self.zone = pg.Surface((50 + (__class__.zone[xy][0] * (num - 1)), 50 + (__class__.zone[xy][1] * (num - 1))))
-        # print(self.zone.get_size())
+        self.limit = limit
+        zonex = __class__.zone[xy][0]
+        zoney = __class__.zone[xy][1]
+        self.image = pg.Surface((50 + (zonex * (num - 1)),
+                                50 + (zoney * (num - 1)))) # 爆発エフェクト表示用
+        for i in range(num): # マス数分結合する
+            self.image.blit(__class__.img, [zonex * i, zoney* i])
+        self.rect = self.image.get_rect()
+        self.rect.center = (vx[0] + zonex * num) / 2, (vx[1] + zoney * num) / 2 # Surfaceの中央に設定
 
+    def update(self) -> None:
+        """爆弾の情報を更新する"""
+        self.limit -= 1
+        if self.limit == 0:
+            self.kill()
 
 # スコア表示クラス
 class Score:
@@ -431,6 +442,8 @@ def main() -> None:
         enemys.draw(screen)
         boms.update() # 爆弾グループの更新
         boms.draw(screen)
+        bom_effects.update()
+        bom_effects.draw(screen)
         score.update(screen, font) # スコア表示
 
         pg.display.update()
