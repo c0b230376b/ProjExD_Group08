@@ -204,7 +204,6 @@ class Bomber(pg.sprite.Sprite):
                 test.center = (self.vx[0] + zone[i][0] * j , self.vx[1] + zone[i][1] * j) # 50*50をチェック
                 check = check_bound(test)
                 if check != (True, True): # 盤面領域外の場合
-                    print(1234)
                     break
                 count  += 1 # 生成数加算
             if count > 0:
