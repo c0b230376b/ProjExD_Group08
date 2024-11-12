@@ -282,6 +282,18 @@ class Score:
                         enemy.kill()  # 敵を消去
                         break
 
+    def enemy_to_effect(self, effects, enemys):
+        """
+        敵と爆弾の接敵確認
+        引数1 effects: 爆弾エフェクトのグループ
+        引数2 enemys: 敵のグループ
+        """
+        check = pg.sprite.groupcollide(effects, enemys, False, True)
+        if len(check) > 0: # 衝突発生の有無を確認
+            for v in check.values():
+                for i in range(len(v)):
+                    self.add_score(100)
+
     def update(self, screen: pg.Surface, font: pg.font) -> None:
         """
         スコア表示情報を更新する
@@ -444,6 +456,7 @@ def main() -> None:
                     boms.add(Bomber(hero.rct.center, hero, enemys, bom_effects))
 
         score.enemy_to_bom(boms, enemys) # 爆弾と敵の衝突判定
+        score.enemy_to_effect(bom_effects, enemys) # 敵と爆発エフェクトの衝突判定
 
         screen.blit(bg_img, [0, 50])
         hero.update(screen) # 主人公(操作キャラ)クラスの更新
