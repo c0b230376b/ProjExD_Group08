@@ -240,6 +240,7 @@ class BomberZone(pg.sprite.Sprite):
         zoney = __class__.zone[xy][1]
         self.image = pg.Surface((50 + abs((zonex) * (num - 1)),
                                 50 + abs((zoney) * (num - 1)))) # 爆発エフェクト表示用
+        self.image.fill((255, 100, 100))
         for i in range(num): # マス数分結合する
             self.image.blit(__class__.img, [zonex * i, zoney* i])
         self.rect = self.image.get_rect()
