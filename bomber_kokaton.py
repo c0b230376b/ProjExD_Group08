@@ -214,15 +214,17 @@ class Bomber(pg.sprite.Sprite):
 class BomberZone(pg.sprite.Sprite):
     """爆発エフェクトに関するクラス"""
     img = pg.image.load("images/explosion/burn.png")
-    zone = {0:[0, -50],  # 上
+    zone = { # 座標設定用
+            0:[0, -50],  # 上
             1:[+50, 0],  # 右
             2:[0, +50],  # 下
-            3:[+50, 0],  # 左
+            3:[-50, 0],  # 左
             }
-    plus = {0:[0, -25], # 上
+    plus = { # 座標調整用
+            0:[0, -25], # 上
             1:[25, 0], # 右
             2:[0, 25], # 下
-            3:[25, 0], # 左
+            3:[-25, 0], # 左
             }
 
     def __init__(self, vx: tuple[int, int], num: int, xy, limit: int) -> None:
@@ -242,11 +244,9 @@ class BomberZone(pg.sprite.Sprite):
         for i in range(num): # マス数分結合する
             self.image.blit(__class__.img, [zonex * i, zoney* i])
         self.rect = self.image.get_rect()
-        self.rect.center = (vx[0] + __class__.plus[num][0]) + zonex * max(1, num / 2), \
-                           (vx[1] + __class__.plus[num][1]) + zoney * max(1, num / 2) # Surfaceの中央に設定
-        print(vx[0], vx[1])
-        # print(vx[0] + zonex * max(1, num / 2), vx[1] + zoney * max(1, num / 2))
-        print(self.rect.center)
+        self.rect.center = (vx[0] + __class__.plus[xy][0]) + zonex * max(1, num / 2), \
+                           (vx[1] + __class__.plus[xy][1]) + zoney * max(1, num / 2) # Surfaceの中央に設定
+
     def update(self) -> None:
         """爆弾の情報を更新する"""
         self.limit -= 1
