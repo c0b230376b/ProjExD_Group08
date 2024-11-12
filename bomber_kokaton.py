@@ -502,7 +502,7 @@ def main() -> None:
 
     pg.font.init() # フォントの初期化
     font = pg.font.Font(None, 36) # フォントを作成
-    start_ticks, time_limit = initialize_timer(30) # 180秒(3分)に設定
+    start_ticks, time_limit = initialize_timer(20) # 20秒(3分)に設定
 
     ct = 0 # 爆弾設置のクールタイム
     ct_flag = True
