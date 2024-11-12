@@ -9,6 +9,12 @@ import pygame as pg
 WIDTH, HEIGHT = 750, 700
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+obstacles = [ # 障害物のオブジェクト生成
+    pg.Rect(100 + 100 * i, 150 + 100 * j, 50, 50)
+    for i in range(6)
+    for j in range(5)
+]
+
 class Score:
     """
     スコア管理クラス
@@ -82,14 +88,14 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
         yoko = False
     if obj_rct.top < 100 or HEIGHT - 50 < obj_rct.bottom:
         tate = False
-    for i in range(6):
-        num = 100 * i
-        if (100 + num) < obj_rct.left < (150 + num) or (100 + num) < obj_rct.right < (150 + num):
-            for j in range(5):
-                num = 100 * j
-                if 150 + num < obj_rct.top < 200 + num or 150 + num < obj_rct.bottom < 200 + num:
-                    yoko = False
-                    tate = False
+
+    for obstacle in obstacles:
+        if obj_rct.colliderect(obstacle): # 障害物と重なったら
+            yoko = False
+            tate = False
+            break  # 衝突があれば判定を抜ける
+        
+
     return yoko, tate
 
 
@@ -310,6 +316,7 @@ class Bomber(pg.sprite.Sprite):
                 test.center = (self.vx[0] + zone[i][0] * j , self.vx[1] + zone[i][1] * j) # 50*50をチェック
                 check = check_bound(test)
                 if check != (True, True): # 盤面領域外の場合
+                    print(1234)
                     break
                 count  += 1 # 生成数加算
             if count > 0:
@@ -515,29 +522,6 @@ def show_timer(screen: pg.Surface, font: pg.font.Font, start_ticks: int, time_li
             return False  # タイマー終了
 
     return True
-
-
-# 盤面領域判定関数
-def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
-    """
-    オブジェクトが画面内or画面外を判定し，真理値タプルを返す関数
-    引数：こうかとんやその他動的オブジェクトのRect
-    戻り値：横方向，縦方向のはみ出し判定結果（画面内：True／画面外：False）
-    """
-    yoko, tate = True, True
-    if obj_rct.left < 50 or WIDTH - 50 < obj_rct.right:
-        yoko = False
-    if obj_rct.top < 100 or HEIGHT - 50 < obj_rct.bottom:
-        tate = False
-    for i in range(6):
-        num = 100 * i
-        if (100 + num) < obj_rct.left < (150 + num) or (100 + num) < obj_rct.right < (150 + num):
-            for j in range(5):
-                num = 100 * j
-                if 150 + num < obj_rct.top < 200 + num or 150 + num < obj_rct.bottom < 200 + num:
-                    yoko = False
-                    tate = False
-    return yoko, tate
 
 
 # ゲームオーバー画面表示関数
