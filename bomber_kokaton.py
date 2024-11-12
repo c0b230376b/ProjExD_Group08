@@ -503,15 +503,30 @@ def main() -> None:
     font = pg.font.Font(None, 36) # フォントを作成
     start_ticks, time_limit = initialize_timer(30) # 180秒(3分)に設定
 
+    ct = 0 # 爆弾設置のクールタイム
+    ct_flag = True
+
     while True:
+        if timestop.active:
+            ct_flag = True
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:  # スペースキーで爆弾設置
-                    boms.add(Bomber(hero.rct.center, hero, enemys, bom_effects))
+                    if ct_flag:
+                        boms.add(Bomber(hero.rct.center, hero, enemys, bom_effects))
+                        ct_flag = False
+                        ct = 30
+                        print(ct, ct_flag)
                 elif event.key == pg.K_LSHIFT or event.key == pg.K_RSHIFT:  # Shiftキーでタイムストップ
                     timestop.activate()
+        if ct > 0:
+            print(ct)
+            ct -= 1
+        if ct == 0 and ct_flag == False:
+            print("c")
+            ct_flag = True
 
         screen.blit(bg_img, [0, 50])
 
