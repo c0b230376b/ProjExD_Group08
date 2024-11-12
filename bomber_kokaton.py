@@ -140,17 +140,25 @@ class Bomber(pg.sprite.Sprite):
     """
     爆弾に関するクラス
     """
-    def __init__(self, vx: tuple[int, int], hero: Hero, enemies: pg.sprite.Group) -> None:
+    def __init__(self, vx: tuple[int, int], hero: Hero, enemies: pg.sprite.Group, bom_effects: pg.sprite.Group) -> None:
+        """
+        引数1: vx:heroのrect座標
+        引数2: hero: Heloのインスタンス
+        引数3: enemies: 敵グループ
+        引数4: bom_effects: 爆発エフェクトグループ
+        """
         super().__init__()
         self.bom_img = pg.image.load("images/bom/bom.png")
         self.exp_img = pg.image.load("images/bom/explosion.png")
         self.image = pg.transform.rotozoom(self.bom_img, 0, 0.1)
         self.rect = self.image.get_rect()
+        self.vx = vx
         self.rect.center = vx
         self.count = 300
         self.state = "bom"
         self.hero = hero
         self.enemies = enemies
+        self.bom_effects = bom_effects
 
     def control(self) -> None:
         """
@@ -161,6 +169,7 @@ class Bomber(pg.sprite.Sprite):
                 self.image = pg.transform.rotozoom(self.exp_img, 180, 0.05)
                 self.count = 30
                 self.state = "explosion"
+                self.call_effect() # 爆発エフェクト呼び出し
             else:
                 # 爆発時に敵と衝突した場合スコアを増加
                 collided_enemies = pg.sprite.spritecollide(self, self.enemies, True)
@@ -172,12 +181,76 @@ class Bomber(pg.sprite.Sprite):
             if self.state == "explosion":
                 self.image = pg.transform.rotate(self.image, 90)
 
+    def call_effect(self):
+        """BomberZoneクラスを呼び出す"""
+        test = pg.Surface((50, 50)).get_rect() # 爆発範囲想定用
+        zone = {0:[0, -50],  # 上
+                1:[+50, 0],  # 右
+                2:[0, 50],  # 下
+                3:[-50, 0],  # 左
+                }
+        keep = [] # 引数用(爆発エフェクト生成数を記録)
+
+        # 盤面領域判定による爆発エフェクト生成数決定
+        for i in range(4):
+            count = 0 # 一方向の生成数(上限3)
+            for j in range(1, 4):
+                test.center = (self.vx[0] + zone[i][0] * j , self.vx[1] + zone[i][1] * j) # 50*50をチェック
+                check = check_bound(test)
+                if check != (True, True): # 盤面領域外の場合
+                    break
+                count  += 1 # 生成数加算
+            if count > 0:
+                self.bom_effects.add(BomberZone(self.vx, count, i, self.count))
+
     def update(self) -> None:
         """
         爆弾の情報を更新する
         """
         self.control()
 
+
+class BomberZone(pg.sprite.Sprite):
+    """爆発エフェクトに関するクラス"""
+    img = pg.image.load("images/explosion/burn.png")
+    zone = { # 座標設定用
+            0:[0, -50],  # 上
+            1:[+50, 0],  # 右
+            2:[0, +50],  # 下
+            3:[-50, 0],  # 左
+            }
+    plus = { # 座標調整用
+            0:[0, -25], # 上
+            1:[25, 0], # 右
+            2:[0, 25], # 下
+            3:[-25, 0], # 左
+            }
+
+    def __init__(self, vx: tuple[int, int], num: int, xy, limit: int) -> None:
+        """
+        爆発エフェクトのレクト生成
+        引数1 vx: 爆発エフェクト基準
+        引数2 num: エフェクト範囲のマス数
+        引数3 xy: 生成方向(0, 1, 2, 3で判定)
+        引数4 limit: 爆発エフェクトの存在時間
+        """
+        super().__init__()
+        self.limit = limit
+        zonex = __class__.zone[xy][0]
+        zoney = __class__.zone[xy][1]
+        self.image = pg.Surface((50 + abs((zonex) * (num - 1)),
+                                50 + abs((zoney) * (num - 1)))) # 爆発エフェクト表示用
+        for i in range(num): # マス数分結合する
+            self.image.blit(__class__.img, [zonex * i, zoney* i])
+        self.rect = self.image.get_rect()
+        self.rect.center = (vx[0] + __class__.plus[xy][0]) + zonex * max(1, num / 2), \
+                           (vx[1] + __class__.plus[xy][1]) + zoney * max(1, num / 2) # Surfaceの中央に設定
+
+    def update(self) -> None:
+        """爆弾の情報を更新する"""
+        self.limit -= 1
+        if self.limit == 0:
+            self.kill()
 
 # スコア表示クラス
 class Score:
@@ -207,6 +280,18 @@ class Score:
                         self.add_score(100)  # スコアを加算
                         enemy.kill()  # 敵を消去
                         break
+
+    def enemy_to_effect(self, effects, enemys):
+        """
+        敵と爆弾の接敵確認
+        引数1 effects: 爆弾エフェクトのグループ
+        引数2 enemys: 敵のグループ
+        """
+        check = pg.sprite.groupcollide(effects, enemys, False, True)
+        if len(check) > 0: # 衝突発生の有無を確認
+            for v in check.values():
+                for i in range(len(v)):
+                    self.add_score(100)
 
     def update(self, screen: pg.Surface, font: pg.font) -> None:
         """
@@ -407,6 +492,7 @@ def main() -> None:
     position = random_position() # 敵味方の初期位置
     hero = Hero(position[-1])  # 主人公の初期位置
     boms = pg.sprite.Group()  # 爆弾クラスのグループ作成
+    bom_effects = pg.sprite.Group() # 爆弾のエフェクトのブループ
     enemys = pg.sprite.Group()  # 敵のスプライトグループ
     for i, j in enumerate(position[:-1]):
         enemys.add(Enemy(i, j))  # 敵のインスタンス生成
@@ -431,6 +517,7 @@ def main() -> None:
         screen.blit(bg_img, [0, 50])
 
         score.enemy_to_bom(boms, enemys) # 爆弾と敵の衝突判定
+        score.enemy_to_effect(bom_effects, enemys) # 敵と爆発エフェクトの衝突判定
 
         timestop.update(enemys,screen)  # タイムストップの更新
         hero.update(screen) # 主人公(操作キャラ)クラスの更新
@@ -443,6 +530,8 @@ def main() -> None:
         enemys.draw(screen)
         boms.update() # 爆弾グループの更新
         boms.draw(screen)
+        bom_effects.update()
+        bom_effects.draw(screen)
         score.update(screen, font) # スコア表示
         
 
