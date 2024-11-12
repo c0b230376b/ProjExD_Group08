@@ -35,8 +35,8 @@ class Hero:
 
     def __init__(self, xy: tuple[int, int]) -> None:
         self.img = __class__.imgs[(+50, 0)]
-        self.rct: pg.Rect = self.img.get_rect()
-        self.rct.center = xy
+        self.rect: pg.Rect = self.img.get_rect()
+        self.rect.center = xy
         self.dire = (+50, 0)
         self.score = 0  # スコアの初期化
 
@@ -62,17 +62,17 @@ class Hero:
                     if 0 != sum_mv[0] and 0 != sum_mv[1]: # 斜め移動防止用
                         sum_mv[0] = 0
                         sum_mv[1] = 0
-            self.rct.move_ip(sum_mv) # 移動
+            self.rect.move_ip(sum_mv) # 移動
             __class__.mvct = 15 # 0.25秒の待機
         elif 0 < __class__.mvct:
             __class__.mvct -= 1
 
-        if check_bound(self.rct) != (True, True):
-            self.rct.move_ip(-sum_mv[0], -sum_mv[1])
+        if check_bound(self.rect) != (True, True):
+            self.rect.move_ip(-sum_mv[0], -sum_mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.img = __class__.imgs[tuple(sum_mv)]
             self.dire = sum_mv
-        screen.blit(self.img, self.rct)
+        screen.blit(self.img, self.rect)
 
 
 # 敵のクラス
@@ -281,7 +281,7 @@ class Score:
                         enemy.kill()  # 敵を消去
                         break
 
-    def enemy_to_effect(self, effects, enemys):
+    def enemy_to_effect(self, effects: pg.sprite.Group, enemys: pg.sprite.Group):
         """
         敵と爆弾の接敵確認
         引数1 effects: 爆弾エフェクトのグループ
@@ -515,7 +515,7 @@ def main() -> None:
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:  # スペースキーで爆弾設置
                     if ct_flag and len(boms) < 6:
-                        boms.add(Bomber(hero.rct.center, hero, enemys, bom_effects))
+                        boms.add(Bomber(hero.rect.center, hero, enemys, bom_effects))
                         ct_flag = False
                         ct = 30
                 elif event.key == pg.K_LSHIFT or event.key == pg.K_RSHIFT:  # Shiftキーでタイムストップ
@@ -529,6 +529,10 @@ def main() -> None:
 
         score.enemy_to_bom(boms, enemys) # 爆弾と敵の衝突判定
         score.enemy_to_effect(bom_effects, enemys) # 敵と爆発エフェクトの衝突判定
+        # 主人公と爆発エフェクトの衝突判定 \ 主人公と敵の衝突判定
+        if len(pg.sprite.spritecollide(hero, bom_effects, False)) or \
+            len(pg.sprite.spritecollide(hero, enemys, False)):
+            return # 自爆によりゲームオーバー
 
         timestop.update(enemys,screen)  # タイムストップの更新
         hero.update(screen) # 主人公(操作キャラ)クラスの更新
