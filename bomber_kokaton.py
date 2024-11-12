@@ -514,18 +514,15 @@ def main() -> None:
                 return
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:  # スペースキーで爆弾設置
-                    if ct_flag:
+                    if ct_flag and len(boms) < 6:
                         boms.add(Bomber(hero.rct.center, hero, enemys, bom_effects))
                         ct_flag = False
                         ct = 30
-                        print(ct, ct_flag)
                 elif event.key == pg.K_LSHIFT or event.key == pg.K_RSHIFT:  # Shiftキーでタイムストップ
                     timestop.activate()
         if ct > 0:
-            print(ct)
             ct -= 1
-        if ct == 0 and ct_flag == False:
-            print("c")
+        if ct == 0 and not ct_flag:
             ct_flag = True
 
         screen.blit(bg_img, [0, 50])
@@ -552,7 +549,7 @@ def main() -> None:
             return
 
         pg.display.update()
-        clock.tick(60) # framerateを60に設定
+        clock.tick(120) # framerateを60に設定
 
 
 if __name__ == "__main__":
