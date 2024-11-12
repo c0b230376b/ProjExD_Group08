@@ -290,8 +290,7 @@ class Score:
         check = pg.sprite.groupcollide(effects, enemys, False, True)
         if len(check) > 0: # 衝突発生の有無を確認
             for v in check.values():
-                for i in range(len(v)):
-                    self.add_score(100)
+                self.add_score(100 * len(v))
 
     def update(self, screen: pg.Surface, font: pg.font) -> None:
         """
@@ -510,7 +509,7 @@ def main() -> None:
                 return
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:  # スペースキーで爆弾設置
-                    boms.add(Bomber(hero.rct.center, hero, enemys))
+                    boms.add(Bomber(hero.rct.center, hero, enemys, bom_effects))
                 elif event.key == pg.K_LSHIFT or event.key == pg.K_RSHIFT:  # Shiftキーでタイムストップ
                     timestop.activate()
 
@@ -525,15 +524,14 @@ def main() -> None:
         # 敵の更新処理（停止フラグによって動きを制御）
         for enemy in enemys:
             if not enemy.stopped:  # stoppedフラグがFalseのときのみ動作更新
-                enemy.update()  
-        
+                enemy.update()
+
         enemys.draw(screen)
         boms.update() # 爆弾グループの更新
         boms.draw(screen)
         bom_effects.update()
         bom_effects.draw(screen)
         score.update(screen, font) # スコア表示
-        
 
         if not show_timer(screen, font, start_ticks, time_limit): # 制限時間
             return
