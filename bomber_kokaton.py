@@ -545,7 +545,7 @@ def main() -> None:
         bom_effects.draw(screen)
         score.update(screen, font) # スコア表示
 
-        if not show_timer(screen, font, start_ticks, time_limit): # 制限時間
+        if not show_timer(screen, font, start_ticks, time_limit) or len(enemys) == 0: # 制限時間、敵の全滅
             return
 
         pg.display.update()
